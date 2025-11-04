@@ -1,4 +1,4 @@
-package com.example.scanner
+package com.example.scanner.list
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.scanner.ui.theme.ScannerTheme
 
-class MainActivity : ComponentActivity() {
+class ListActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
