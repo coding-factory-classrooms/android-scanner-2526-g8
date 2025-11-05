@@ -38,6 +38,8 @@ fun CameraQuickTest() {
                 bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
             }
 
+
+
             val file = java.io.File(context.filesDir, filename)
 
 

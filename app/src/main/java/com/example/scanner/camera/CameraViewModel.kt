@@ -35,7 +35,7 @@ class CameraViewModel: ViewModel() {
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
     }
 
-    fun sendImageToAPI(context: Context) {
+    fun sendImageToAPI(context: Context, ) {
         val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.test_img)
         val imageString = getEncodedStringFromBitmap(bitmap)
 
