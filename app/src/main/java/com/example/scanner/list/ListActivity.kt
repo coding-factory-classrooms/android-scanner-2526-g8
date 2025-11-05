@@ -19,16 +19,17 @@ import com.example.scanner.ui.theme.ScannerTheme
 import io.paperdb.Paper as Paper
 
 
-
 class ListActivity : ComponentActivity() {
     val PERMISSION_REQUEST_CODE: Int = 200
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Paper.init(this)
+
         if(checkSelfPermission(android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED){
             requestPermissions(arrayOf(android.Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE)
         }
+
         enableEdgeToEdge()
         setContent {
             ListScreen()
