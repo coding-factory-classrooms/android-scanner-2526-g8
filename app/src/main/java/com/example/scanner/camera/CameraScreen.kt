@@ -38,6 +38,8 @@ fun CameraQuickTest(vm: CameraViewModel= viewModel()) {
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
             }
 
+
+
             val file = java.io.File(context.filesDir, filename)
 
             vm.sendImageToAPI(bitmap)

@@ -1,7 +1,8 @@
+// kotlin
 package com.example.scanner.list
 
 import android.content.Intent
-import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,31 +22,44 @@ import com.example.scanner.ui.theme.ScannerTheme
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.ui.res.painterResource
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
-import com.example.scanner.camera.CameraViewModel
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.Text
+import com.example.scanner.test.TestActivity
 
 @Composable
-fun ListScreen(vm: CameraViewModel = viewModel()) {
-    // Obtenir le context actuel
+fun ListScreen() {
     val context = LocalContext.current
-
 
     Scaffold(
         floatingActionButton = {
-            CameraButton(
-                 onButtonClick = {
-                    // Charger le context pour démarrer une activité pour camera activity
-                    val intent = Intent(context, CameraActivity::class.java)
-                    context.startActivity(intent)
-                },
-                modifier = Modifier
-                    .padding(16.dp)
-                    .navigationBarsPadding()
-                    .height(10.dp)
-            )
+            // Conteneur qui prend toute la largeur pour positionner un bouton à gauche et un à droite
+            androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+                CameraButton(
+                    onButtonClick = {
+                        val intent = Intent(context, CameraActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                        .navigationBarsPadding()
+                        .height(80.dp)
+                )
+
+                TestButton(
+                    onButtonClick = {
+                        val intent = Intent(context, TestActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(16.dp)
+                        .height(60.dp)
+                        .navigationBarsPadding()
+                )
+            }
         },
         floatingActionButtonPosition = FabPosition.End
     ) { innerPadding ->
@@ -56,22 +70,15 @@ fun ListScreen(vm: CameraViewModel = viewModel()) {
         ) {
             // items
         }
-        Button(onClick = {
-            val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.test_img)
-            vm.sendImageToAPI(bitmap)
-        }) {
-            Text("Send test api call")
-        }
     }
 }
 
 @Composable
-fun CameraButton(onButtonClick: () -> Unit, modifier: Any) {
+fun CameraButton(onButtonClick: () -> Unit, modifier: Modifier = Modifier) {
     Button(
         onClick = onButtonClick,
         contentPadding = PaddingValues(8.dp),
-        modifier = Modifier
-            .padding(16.dp)
+        modifier = modifier
             .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp) // j'évite qu'il puisse être negatif
     ) {
         Icon(
@@ -82,8 +89,17 @@ fun CameraButton(onButtonClick: () -> Unit, modifier: Any) {
     }
 }
 
-
-
+@Composable
+fun TestButton(onButtonClick: () -> Unit, modifier: Modifier = Modifier) {
+    Button(
+        onClick = onButtonClick,
+        contentPadding = PaddingValues(8.dp),
+        modifier = modifier
+            .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
+    ) {
+        Text(text = "test")
+    }
+}
 
 @Preview
 @Composable
