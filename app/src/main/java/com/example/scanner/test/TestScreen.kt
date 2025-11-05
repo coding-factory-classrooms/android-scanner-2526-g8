@@ -1,7 +1,9 @@
 package com.example.scanner.test.TestScreen
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
@@ -10,8 +12,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scanner.R
+import com.example.scanner.camera.CameraViewModel
 import com.example.scanner.ui.theme.ScannerTheme
 
 @Composable
@@ -29,12 +35,9 @@ fun TestScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Button(
-            onClick = onTest1,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "Test 1")
-        }
+        // spacer de 16dp
+        Spacer(modifier = Modifier.padding(25.dp))
+        Button1()
 
         Button(
             onClick = onTest2,
@@ -69,5 +72,20 @@ fun TestScreenPreview() {
             onTest3 = { /* TODO: appeler ton test 3 */ },
             onTest4 = { /* TODO: appeler ton test 4 */ }
         )
+    }
+}
+
+@Composable
+fun Button1(vm: CameraViewModel= viewModel()) {
+    val context = LocalContext.current
+
+    Button(
+
+        onClick = {
+            val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.test_img)
+            vm.sendImageToAPI(bitmap) },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(text = "Envoyer l'image à l'API")
     }
 }
