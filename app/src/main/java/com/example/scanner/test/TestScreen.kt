@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
-import com.example.scanner.camera.CameraViewModel
+import com.example.scanner.list.ListViewModel
 import com.example.scanner.ui.theme.ScannerTheme
 
 @Composable
@@ -76,7 +76,7 @@ fun TestScreenPreview() {
 }
 
 @Composable
-fun Button1(vm: CameraViewModel= viewModel()) {
+fun Button1(vm: ListViewModel= viewModel()) {
     val context = LocalContext.current
 
     Button(

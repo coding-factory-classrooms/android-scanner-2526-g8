@@ -1,11 +1,18 @@
 // kotlin
 package com.example.scanner.list
 
+import android.content.Context
 import android.content.Intent
-import androidx.compose.foundation.Image
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,29 +24,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.scanner.camera.CameraActivity
 import com.example.scanner.ui.theme.ScannerTheme
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.ui.res.painterResource
 import com.example.scanner.R
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.scanner.details.DetailsActivity
 import com.example.scanner.test.TestActivity
 
 @Composable
-fun ListScreen() {
+fun ListScreen(vm: ListViewModel = viewModel()) {
     val context = LocalContext.current
+
+    val uiState by vm.uiStateFlow.collectAsState()
 
     Scaffold(
         floatingActionButton = {
-            // Conteneur qui prend toute la largeur pour positionner un bouton à gauche et un à droite
-            androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 CameraButton(
-                    onButtonClick = {
-                        val intent = Intent(context, CameraActivity::class.java)
-                        context.startActivity(intent)
+                    onPhotoTaken = { bitmap ->
+                        if (bitmap != null) {
+                            val filename = "photo_${System.currentTimeMillis()}.png"
+
+                            // save file in phone local storage as png
+                            context.openFileOutput(filename, Context.MODE_PRIVATE).use { out ->
+                                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                            }
+
+                            vm.sendImageToAPI(bitmap)
+                        }
                     },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -60,26 +80,74 @@ fun ListScreen() {
                         .navigationBarsPadding()
                 )
             }
-        },
-        floatingActionButtonPosition = FabPosition.End
+        }, floatingActionButtonPosition = FabPosition.End
     ) { innerPadding ->
-        LazyColumn(
+        Box(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
+                .fillMaxSize(),
         ) {
-            // items
+            ListScreenBody(uiState)
         }
     }
 }
 
 @Composable
-fun CameraButton(onButtonClick: () -> Unit, modifier: Modifier = Modifier) {
+fun ListScreenBody(uiState: ListUiState) {
+    val context = LocalContext.current
+
+    when (uiState) {
+        is ListUiState.Error -> {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(text = uiState.error)
+            }
+        }
+        ListUiState.Initial -> ItemsList()
+        ListUiState.Loading -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
+                Text(text = "Loading...")
+            }
+        }
+        is ListUiState.Success -> {
+            val intent = Intent(context, DetailsActivity::class.java)
+            context.startActivity(intent)
+        }
+    }
+}
+
+@Composable
+fun ItemsList() {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        // items
+    }
+}
+
+@Composable
+fun CameraButton(onPhotoTaken: (Bitmap?) -> Unit, modifier: Modifier = Modifier) {
+    val takePicturePreview = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview(),
+        onResult = onPhotoTaken
+    )
+
     Button(
-        onClick = onButtonClick,
+        onClick = { takePicturePreview.launch(null) },
         contentPadding = PaddingValues(8.dp),
-        modifier = modifier
-            .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp) // j'évite qu'il puisse être negatif
+        modifier = modifier.defaultMinSize(
+            minWidth = 1.dp,
+            minHeight = 1.dp
+        ) // j'évite qu'il puisse être negatif
     ) {
         Icon(
             painterResource(R.drawable.camera),
@@ -94,8 +162,7 @@ fun TestButton(onButtonClick: () -> Unit, modifier: Modifier = Modifier) {
     Button(
         onClick = onButtonClick,
         contentPadding = PaddingValues(8.dp),
-        modifier = modifier
-            .defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
+        modifier = modifier.defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
     ) {
         Text(text = "test")
     }
