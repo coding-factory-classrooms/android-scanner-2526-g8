@@ -30,17 +30,17 @@ fun CameraQuickTest(vm: CameraViewModel= viewModel()) {
     // Lancement de l'activité caméra
     val takePicturePreview = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
-    ) { bmp ->
-        photo.value = bmp
-        if (bmp != null) {
+    ) { bitmap ->
+        photo.value = bitmap
+        if (bitmap != null) {
             val filename = "photo_${System.currentTimeMillis()}.png"
             context.openFileOutput(filename, android.content.Context.MODE_PRIVATE).use { out ->
-                bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+                bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
             }
 
             val file = java.io.File(context.filesDir, filename)
 
-            vm.sendImageToAPI(context, bmp)
+            vm.sendImageToAPI(bitmap)
 
             val intent = android.content.Intent(context, com.example.scanner.details.DetailsActivity::class.java).apply {
                 putExtra("photo_filename", filename)

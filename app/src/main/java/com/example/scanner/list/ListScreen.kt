@@ -1,6 +1,7 @@
 package com.example.scanner.list
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,7 +56,10 @@ fun ListScreen(vm: CameraViewModel = viewModel()) {
         ) {
             // items
         }
-        Button(onClick = { vm.sendImageToAPI(context) }) {
+        Button(onClick = {
+            val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.test_img)
+            vm.sendImageToAPI(bitmap)
+        }) {
             Text("Send test api call")
         }
     }
