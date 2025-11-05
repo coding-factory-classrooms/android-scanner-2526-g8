@@ -13,6 +13,7 @@ class DetailsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+
         setContent {
             ScannerTheme {
                 DetailsScreen(

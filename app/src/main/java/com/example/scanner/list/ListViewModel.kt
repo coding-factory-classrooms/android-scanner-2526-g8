@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.example.scanner.Feature
 import com.example.scanner.GoogleVisionAPI
 import com.example.scanner.Image
+import com.example.scanner.Paper.PhotoRepository
 import com.example.scanner.RequestItem
 import com.example.scanner.VisionRequest
 import com.example.scanner.VisionResponse
@@ -17,7 +18,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayOutputStream
 
-
 sealed class ListUiState {
     data object Initial : ListUiState()
     data object Loading : ListUiState()
@@ -25,18 +25,32 @@ sealed class ListUiState {
     data class Error(val error: String) : ListUiState()
 }
 
-
 class ListViewModel : ViewModel() {
-    val retrofit: Retrofit = Retrofit.Builder()
+
+    private val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl("https://vision.googleapis.com/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    val api: GoogleVisionAPI = retrofit.create(GoogleVisionAPI::class.java)
+    private val api: GoogleVisionAPI = retrofit.create(GoogleVisionAPI::class.java)
 
     val uiStateFlow = MutableStateFlow<ListUiState>(ListUiState.Initial)
 
-    fun getEncodedStringFromBitmap(bitmap: Bitmap): String {
+    // fonction pour sauvegarder le record dans le paper
+    // ListViewModel.kt
+    fun savePhotoRecord(
+        imagePath: String,
+        ocrText: String
+    ): String {
+        val rec = com.example.scanner.Paper.PhotoRepository.createFrom(
+            imagePath = imagePath,
+            ocrText = ocrText
+        )
+        return rec.id
+    }
+
+
+    private fun getEncodedStringFromBitmap(bitmap: Bitmap): String {
         val outputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         val imageBytes = outputStream.toByteArray()
@@ -71,14 +85,12 @@ class ListViewModel : ViewModel() {
                         ?.description
                     uiStateFlow.value = ListUiState.Success(msg)
                 } else {
-                    val err = "HTTP ${response.code()}"
-                    uiStateFlow.value = ListUiState.Error(err)
+                    uiStateFlow.value = ListUiState.Error("HTTP ${response.code()}")
                 }
             }
 
             override fun onFailure(call: Call<VisionResponse>, t: Throwable) {
-                val errMsg = t.message ?: "Unknown error"
-                uiStateFlow.value = ListUiState.Error("API call failed: $errMsg")
+                uiStateFlow.value = ListUiState.Error("API call failed: ${t.message ?: "Unknown error"}")
             }
         })
     }

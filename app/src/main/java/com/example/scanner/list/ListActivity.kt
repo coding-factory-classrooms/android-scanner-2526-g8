@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.scanner.ui.theme.ScannerTheme
-import io.paperdb.Paper
+import io.paperdb.Paper as Paper
 
 
 class ListActivity : ComponentActivity() {
