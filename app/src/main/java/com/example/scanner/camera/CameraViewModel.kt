@@ -35,21 +35,31 @@ class CameraViewModel: ViewModel() {
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
     }
 
-    fun sendImageToAPI(context: Context) {
-        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.test_img)
-        val imageString = getEncodedStringFromBitmap(bitmap)
+    fun sendImageToAPI(context: Context, bitmap: Bitmap? = null) {
+        val bmp = when (bitmap) {
+            null -> {
+                BitmapFactory.decodeResource(context.resources, R.drawable.test_img)
+            }
+
+            else -> {
+                bitmap
+            }
+        }
+        val imageString = getEncodedStringFromBitmap(bmp)
 
         val call = api.detectText(
             "AIzaSyAoSwwDOVrguBX1NqH3N8ebzUkXr_gMamU",
-            VisionRequest(requests = listOf(
-                RequestItem(
-                    image = Image(content = imageString),
-                    features = listOf(Feature(type = "TEXT_DETECTION"))
+            VisionRequest(
+                requests = listOf(
+                    RequestItem(
+                        image = Image(content = imageString),
+                        features = listOf(Feature(type = "TEXT_DETECTION"))
+                    )
                 )
-            ))
+            )
         )
 
-        call.enqueue(object : Callback<VisionResponse>{
+        call.enqueue(object : Callback<VisionResponse> {
             override fun onResponse(
                 call: Call<VisionResponse?>,
                 response: Response<VisionResponse?>

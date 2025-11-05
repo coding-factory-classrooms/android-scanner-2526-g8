@@ -1,7 +1,6 @@
 package com.example.scanner.list
 
 import android.content.Intent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,12 +20,14 @@ import com.example.scanner.ui.theme.ScannerTheme
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
-
+import com.example.scanner.camera.CameraViewModel
 
 @Composable
-fun ListScreen() {
+fun ListScreen(vm: CameraViewModel = viewModel()) {
     // Obtenir le context actuel
     val context = LocalContext.current
 
@@ -53,6 +54,9 @@ fun ListScreen() {
                 .padding(innerPadding)
         ) {
             // items
+        }
+        Button(onClick = { vm.sendImageToAPI(context) }) {
+            Text("Send test api call")
         }
     }
 }

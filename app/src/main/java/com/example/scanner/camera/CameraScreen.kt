@@ -11,7 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.platform.LocalContext
-
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @Composable
@@ -21,7 +21,7 @@ fun CameraScreen() {
 
 
 @Composable
-fun CameraQuickTest() {
+fun CameraQuickTest(vm: CameraViewModel= viewModel()) {
     // je prépare le context pour passer après à la page de détail
     val context = LocalContext.current
     var launched by remember { mutableStateOf(false) }
@@ -40,6 +40,7 @@ fun CameraQuickTest() {
 
             val file = java.io.File(context.filesDir, filename)
 
+            vm.sendImageToAPI(context, bmp)
 
             val intent = android.content.Intent(context, com.example.scanner.details.DetailsActivity::class.java).apply {
                 putExtra("photo_filename", filename)
