@@ -23,6 +23,7 @@ import com.example.scanner.ui.theme.ScannerTheme
 @Composable
 fun DetailsScreen(context: Context, intent: Intent, onFinish: () -> Unit) {
     val filename = intent.getStringExtra("photo_filename")
+    val text = intent.getStringExtra("sendImageToAPI")
     val bmp = filename?.let {
         context.openFileInput(it).use { ins ->
             BitmapFactory.decodeStream(ins)
@@ -50,7 +51,7 @@ fun DetailsScreen(context: Context, intent: Intent, onFinish: () -> Unit) {
             ) {
                 if (bmp != null) {
                     Image(bitmap = bmp.asImageBitmap(), contentDescription = null)
-                    Text("Image reçue avec succès")
+                    Text("${text}")
                 } else {
                     Text("Aucune image reçue")
                 }
