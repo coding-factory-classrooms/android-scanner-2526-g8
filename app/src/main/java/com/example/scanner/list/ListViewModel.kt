@@ -37,9 +37,18 @@ class ListViewModel : ViewModel() {
     val uiStateFlow = MutableStateFlow<ListUiState>(ListUiState.Initial)
 
     // fonction pour sauvegarder le record dans le paper
-    fun savePhotoRecord(imagePath: String, ocrText: String) {
-        PhotoRepository.createFrom(imagePath = imagePath, ocrText = ocrText)
+    // ListViewModel.kt
+    fun savePhotoRecord(
+        imagePath: String,
+        ocrText: String
+    ): String {
+        val rec = com.example.scanner.Paper.PhotoRepository.createFrom(
+            imagePath = imagePath,
+            ocrText = ocrText
+        )
+        return rec.id
     }
+
 
     private fun getEncodedStringFromBitmap(bitmap: Bitmap): String {
         val outputStream = ByteArrayOutputStream()

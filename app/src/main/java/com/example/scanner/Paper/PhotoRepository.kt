@@ -54,11 +54,25 @@ object PhotoRepository {
     }
 
     // sert à mettre à jour la traduction d'une photo
-    fun updateTranslation(id: String, targetLanguage: String, translatedText: String) {
+    fun updateTranslation(
+        id: String,
+        targetLanguage: String,
+        translatedText: String
+    ): Boolean {
         val book = Paper.book(BOOK)
-        val cur = book.read<PhotoRecord>("photo:$id", null) ?: return
-        book.write("photo:$id", cur.copy(targetLanguage = targetLanguage, translatedText = translatedText))
+        val cur = book.read<PhotoRecord>("photo:$id", null) ?: return false
+
+        val lang = targetLanguage.lowercase() // en mode si t'écris EN sa écris en car j'ai peurs que avec des api ou autre sa fait n'importe quoi
+        val updated = cur.copy(
+            targetLanguage = lang,
+            translatedText = translatedText
+
+        )
+
+        book.write("photo:$id", updated)
+        return true
     }
+
 
     // sert a supprimer une photo
     fun delete(id: String) {

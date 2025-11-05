@@ -141,18 +141,35 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
 
                     // Lier au fait que je viens de prendre la photo et après l'attente de l'ocr et une réussite
                     LaunchedEffect(text) {
+                        // sauvegarde fichier
                         val fileName = "photo_${System.currentTimeMillis()}.png"
-                        val file = File(context.filesDir, fileName)
+                        val file = java.io.File(context.filesDir, fileName)
                         val bmp = requireNotNull(photo)
                         context.openFileOutput(fileName, Context.MODE_PRIVATE).use { out ->
-                            bmp.compress(Bitmap.CompressFormat.PNG, 100, out)
+                            bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
                         }
                         val imagePath = file.absolutePath
-                        vm.savePhotoRecord(imagePath = imagePath, ocrText = text)
 
-                        val intent = Intent(context, DetailsActivity::class.java).apply {
-                            putExtra("photo_filename", fileName)
-                            putExtra("photo_text_content", text)
+                        // la je crée la fiche dans le paper et sa récupere aussi l'id de la fiche
+                        val photoId = vm.savePhotoRecord(imagePath = imagePath, ocrText = text)
+
+                        // appeler l'api de traduction ici
+                        try {
+                            /*val translated =  la tu refait ton truck chelou de réussite ou pas etc */
+
+                                // la t'apelle la maj de la fiche avec la traduction
+                               /* com.example.scanner.Paper.PhotoRepository.updateTranslation(
+                                    id = photoId,
+                                    targetLanguage = "en",          // ou une variable choisie
+                                    translatedText = translated
+                                )*/
+                        } catch (t: Throwable) {
+                            // gestion d'erreur tmtc
+                        }
+
+                        //  ouvrir les détails via l'id
+                        val intent = Intent(context, com.example.scanner.details.DetailsActivity::class.java).apply {
+                            putExtra("PHOTO_ID", photoId)
                         }
                         context.startActivity(intent)
                     }
