@@ -8,6 +8,7 @@ import com.example.scanner.GoogleVisionAPI
 import com.example.scanner.Image
 import com.example.scanner.Paper.PhotoRepository
 import com.example.scanner.RequestItem
+import com.example.scanner.TranslateApi
 import com.example.scanner.VisionRequest
 import com.example.scanner.VisionResponse
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,10 +58,10 @@ class ListViewModel : ViewModel() {
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
     }
 
-    fun sendImageToAPI(bitmap: Bitmap) {
+    fun sendImageToAPI(bitmap: Bitmap, targetLang: String = "fr") {
         val imageString = getEncodedStringFromBitmap(bitmap)
 
-        val call: Call<VisionResponse> = api.detectText(
+        val call = api.detectText(
             "AIzaSyAoSwwDOVrguBX1NqH3N8ebzUkXr_gMamU",
             VisionRequest(
                 requests = listOf(
@@ -76,16 +77,32 @@ class ListViewModel : ViewModel() {
 
         call.enqueue(object : Callback<VisionResponse> {
             override fun onResponse(call: Call<VisionResponse>, response: Response<VisionResponse>) {
-                if (response.isSuccessful) {
-                    val msg = response.body()
-                        ?.responses
-                        ?.firstOrNull()
-                        ?.textAnnotations
-                        ?.firstOrNull()
-                        ?.description
-                    uiStateFlow.value = ListUiState.Success(msg)
-                } else {
+                if (!response.isSuccessful) {
                     uiStateFlow.value = ListUiState.Error("HTTP ${response.code()}")
+                    return
+                }
+
+                val msg = response.body()
+                    ?.responses
+                    ?.firstOrNull()
+                    ?.textAnnotations
+                    ?.firstOrNull()
+                    ?.description
+
+                if (msg.isNullOrBlank()) {
+                    uiStateFlow.value = ListUiState.Error("No text detected.")
+                    return
+                }
+
+                val id = PhotoRepository.createFrom("path/to/image.jpg", msg).id
+
+                TranslateApi.translate(msg, targetLang) { translated ->
+                    if (translated != null) {
+                        PhotoRepository.updateTranslation(id, targetLang, translated)
+                        uiStateFlow.value = ListUiState.Success("Translated: $translated")
+                    } else {
+                        uiStateFlow.value = ListUiState.Error("Translation failed.")
+                    }
                 }
             }
 

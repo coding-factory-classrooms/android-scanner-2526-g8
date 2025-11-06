@@ -9,5 +9,5 @@ data class PhotoRecord(
     val createdAtDisplay: String,
     val isFavorite: Boolean = false,
     val targetLanguage: String? = null,
-    val translatedText: String? = null
+    var translatedText: String? = null
 )

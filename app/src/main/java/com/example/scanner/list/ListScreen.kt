@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.Paper.PhotoRecord
 import com.example.scanner.Paper.PhotoRepository
 import com.example.scanner.R
+import com.example.scanner.TranslateApi
 import com.example.scanner.details.DetailsActivity
 import com.example.scanner.test.TestActivity
 import com.example.scanner.ui.theme.ScannerTheme
@@ -154,17 +155,17 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
                         val photoId = vm.savePhotoRecord(imagePath = imagePath, ocrText = text)
 
                         // appeler l'api de traduction ici
-                        try {
-                            /*val translated =  la tu refait ton truck chelou de réussite ou pas etc */
-
-                                // la t'apelle la maj de la fiche avec la traduction
-                               /* com.example.scanner.Paper.PhotoRepository.updateTranslation(
+                        TranslateApi.translate(text, "fr") { translated ->
+                            if (translated != null) {
+                                PhotoRepository.updateTranslation(
                                     id = photoId,
-                                    targetLanguage = "en",          // ou une variable choisie
+                                    targetLanguage = "fr",
                                     translatedText = translated
-                                )*/
-                        } catch (t: Throwable) {
-                            // gestion d'erreur tmtc
+                                )
+                                Toast.makeText(context, "Translation saved!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Translation failed", Toast.LENGTH_SHORT).show()
+                            }
                         }
 
                         //  ouvrir les détails via l'id
@@ -241,8 +242,14 @@ private fun PhotoRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(record.createdAtDisplay)
             val preview = if (record.text.length > 80) record.text.take(80) + "…" else record.text
-            Text(preview)
+            Text("OCR: $preview")
+
+            record.translatedText?.let { translated ->
+                val tPreview = if (translated.length > 80) translated.take(80) + "…" else translated
+                Text("Translation: $tPreview", style = MaterialTheme.typography.bodySmall)
+            }
         }
+
         IconButton(onClick = onToggleFavorite) {
             Icon(
                 imageVector = if (record.isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
