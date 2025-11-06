@@ -164,16 +164,13 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?) {
                         val cleanText = text.lowercase()
 
                         // appeler l'api de traduction ici
-                        TranslateApi.translate(cleanText, "fr") { translated ->
-                            if (translated != null) {
+                        TranslateApi.translate(cleanText, "fr") {
+                            if (it != null) {
                                 PhotoRepository.updateTranslation(
                                     id = newRecord.id,
                                     targetLanguage = "fr",
-                                    translatedText = translated
+                                    translatedText = it
                                 )
-                                Toast.makeText(context, "Translation saved!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "Translation failed", Toast.LENGTH_SHORT).show()
                             }
                         }
 
