@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -140,19 +139,15 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?) {
         }
 
         is ListUiState.Success -> {
-            when (val text = uiState.message) {
-                // OCR a répondu mais aucun texte détecté
-                null -> {
-                    LaunchedEffect(Unit) {
-                        Toast.makeText(
-                            context, "No text has been detected in the image", Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                    ItemsList()
-                }
-                //  on sauvegarde, on crée la fiche, puis on ouvre le détail
-                else -> {
-                    LaunchedEffect(Unit) {
+            ItemsList()
+
+            LaunchedEffect(Unit) {
+                when (val text = uiState.message) {
+                    null -> Toast.makeText(
+                        context, "No text has been detected in the image", Toast.LENGTH_SHORT
+                    ).show()
+
+                    else -> {
                         val fileName = "photo_${System.currentTimeMillis()}.png"
                         val bmp = photo!!
                         context.openFileOutput(fileName, Context.MODE_PRIVATE).use { out ->
@@ -202,8 +197,7 @@ fun ItemsList() {
 
     val records = remember(queryText, onlyFavorites, refreshTick) {
         PhotoRepository.query(
-            text = queryText.text.takeIf { it.isNotBlank() },
-            onlyFavorites = onlyFavorites
+            text = queryText.text.takeIf { it.isNotBlank() }, onlyFavorites = onlyFavorites
         )
     }
 
@@ -213,27 +207,21 @@ fun ItemsList() {
             queryText = queryText,
             onQueryChange = { queryText = it },
             onlyFavorites = onlyFavorites,
-            onToggleFavorites = { onlyFavorites = !onlyFavorites }
-        )
+            onToggleFavorites = { onlyFavorites = !onlyFavorites })
         LazyColumn(Modifier.fillMaxSize()) {
             items(records, key = { it.id }) { rec ->
-                PhotoRow(
-                    record = rec,
-                    onClick = {
-                        val intent = Intent(context, DetailsActivity::class.java)
+                PhotoRow(record = rec, onClick = {
+                    val intent = Intent(context, DetailsActivity::class.java)
 
-                        intent.putExtra("record_id", rec.id)
-                        context.startActivity(intent)
-                    },
-                    onToggleFavorite = {
-                        PhotoRepository.toggleFavorite(rec.id)
-                        refreshTick++
-                    },
-                    onDelete = {
-                        PhotoRepository.delete(rec.id)
-                        refreshTick++
-                    }
-                )
+                    intent.putExtra("record_id", rec.id)
+                    context.startActivity(intent)
+                }, onToggleFavorite = {
+                    PhotoRepository.toggleFavorite(rec.id)
+                    refreshTick++
+                }, onDelete = {
+                    PhotoRepository.delete(rec.id)
+                    refreshTick++
+                })
                 HorizontalDivider()
             }
         }
@@ -247,7 +235,9 @@ private fun FiltersBarSimple(
     onlyFavorites: Boolean,
     onToggleFavorites: () -> Unit
 ) {
-    Column(Modifier.fillMaxWidth().padding(12.dp)) {
+    Column(Modifier
+        .fillMaxWidth()
+        .padding(12.dp)) {
         OutlinedTextField(
             value = queryText,
             onValueChange = onQueryChange,
@@ -259,10 +249,7 @@ private fun FiltersBarSimple(
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             FilterChip(
-                selected = onlyFavorites,
-                onClick = onToggleFavorites,
-                label = { Text("Favoris") }
-            )
+                selected = onlyFavorites, onClick = onToggleFavorites, label = { Text("Favoris") })
         }
     }
 }
