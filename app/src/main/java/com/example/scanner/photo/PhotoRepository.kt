@@ -1,6 +1,6 @@
 package com.example.scanner.photo
 
-import com.example.scanner.TranslateApi
+import com.example.scanner.TranslateAPI
 import io.paperdb.Paper
 import java.io.File
 import java.util.UUID
@@ -17,23 +17,23 @@ object PhotoRepository {
     }
 
     // sert à créer une nouvelle photo
-        fun createFrom(imagePath: String, ocrText: String): PhotoModel {
-            val id = UUID.randomUUID().toString()
-            val rec = PhotoModel(
-                id = id,
-                imagePath = imagePath,
-                text = ocrText,
-                createdAtEpochMs = System.currentTimeMillis(),
-                isFavorite = false
-            )
-            val book = Paper.book(BOOK)
-            book.write("photo:$id", rec)
-            val idx = readIndex()
-            idx.add(0, id)
-            writeIndex(idx)
+    fun createFrom(imagePath: String, ocrText: String): PhotoModel {
+        val id = UUID.randomUUID().toString()
+        val rec = PhotoModel(
+            id = id,
+            imagePath = imagePath,
+            text = ocrText,
+            createdAtEpochMs = System.currentTimeMillis(),
+            isFavorite = false
+        )
+        val book = Paper.book(BOOK)
+        book.write("photo:$id", rec)
+        val idx = readIndex()
+        idx.add(0, id)
+        writeIndex(idx)
 
-            return rec
-        }
+        return rec
+    }
 
     // sert à récupérer toutes les photos triées par date décroissante
     fun getAll(): List<PhotoModel> {
@@ -59,7 +59,7 @@ object PhotoRepository {
         val photo = PhotoRepository.get(photoId) ?: return onDone(false)
         val originalText = photo.text
 
-        TranslateApi.translate(originalText, targetLang) { translated ->
+        TranslateAPI.translate(originalText, targetLang) { translated ->
             if (translated != null) {
                 PhotoRepository.updateTranslation(photoId, targetLang, translated)
                 onDone(true)
@@ -77,8 +77,7 @@ object PhotoRepository {
         val book = Paper.book(BOOK)
         val cur = book.read<PhotoModel>("photo:$id", null) ?: return false
 
-        val lang =
-            targetLanguage.lowercase() // en mode si t'écris EN sa écris en car j'ai peurs que avec des api ou autre sa fait n'importe quoi
+        val lang = targetLanguage.lowercase() // normalise le code du language
         val updated = cur.copy(
             targetLanguage = lang, translatedText = translatedText
 
@@ -109,10 +108,9 @@ object PhotoRepository {
         val q = text?.trim().orEmpty()
         val hasText = q.isNotEmpty()
 
-        return getAll().asSequence()
-            .filter { rec -> !onlyFavorites || rec.isFavorite }
+        return getAll().asSequence().filter { rec -> !onlyFavorites || rec.isFavorite }
             .filter { rec -> fromMs?.let { rec.createdAtEpochMs >= it } ?: true }
-            .filter { rec -> toMs?.let   { rec.createdAtEpochMs <= it } ?: true }
+            .filter { rec -> toMs?.let { rec.createdAtEpochMs <= it } ?: true }
             .filter { rec -> if (!hasText) true else rec.text.contains(q, ignoreCase = true) }
             .toList()
     }

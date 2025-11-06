@@ -1,19 +1,22 @@
 package com.example.scanner
 
-import androidx.compose.runtime.Composable
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONArray
 import java.io.IOException
 import java.net.URLEncoder
 
-object TranslateApi {
-
+object TranslateAPI {
     private val client = OkHttpClient()
 
     fun translate(text: String, targetLang: String, callback: (String?) -> Unit) {
         val normalized = text.replace("\n", " ").replace("\r", "")
         val encoded = URLEncoder.encode(normalized, "UTF-8")
-        val url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$targetLang&dt=t&q=$encoded"
+        val url =
+            "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$targetLang&dt=t&q=$encoded"
 
         val request = Request.Builder().url(url).build()
 
@@ -32,7 +35,6 @@ object TranslateApi {
             }
         })
     }
-
 
 
 }

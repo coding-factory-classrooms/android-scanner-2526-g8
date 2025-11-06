@@ -2,6 +2,7 @@ package com.example.scanner.test
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -116,7 +117,7 @@ fun Button2() {
             val file = File(context.filesDir, fileName)
             // sauvegarde de la bitmap dans le fichier
             context.openFileOutput(fileName, Context.MODE_PRIVATE).use { out ->
-                bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
 
             val imagePath = file.absolutePath

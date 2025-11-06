@@ -56,12 +56,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
-import com.example.scanner.TranslateApi
+import com.example.scanner.TranslateAPI
 import com.example.scanner.common.GoogleVisionAPI
 import com.example.scanner.details.DetailsActivity
 import com.example.scanner.photo.PhotoModel
@@ -78,7 +77,6 @@ import java.util.Locale
 fun ListScreen(vm: ListViewModel = viewModel()) {
     val context = LocalContext.current
     val uiState by vm.uiStateFlow.collectAsState()
-    val photoState = remember { mutableStateOf<Bitmap?>(null) }
 
     val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl("https://vision.googleapis.com/")
@@ -94,7 +92,6 @@ fun ListScreen(vm: ListViewModel = viewModel()) {
                     onPhotoTaken = { bitmap ->
                         if (bitmap != null) {
                             vm.sendImageToAPI(bitmap)
-                            photoState.value = bitmap
                         }
                     },
                     modifier = Modifier
@@ -122,13 +119,13 @@ fun ListScreen(vm: ListViewModel = viewModel()) {
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
-            ListScreenBody(uiState, photoState.value)
+            ListScreenBody(uiState)
         }
     }
 }
 
 @Composable
-fun ListScreenBody(uiState: ListUiState, photo: Bitmap?) {
+fun ListScreenBody(uiState: ListUiState) {
     val context = LocalContext.current
 
     when (uiState) {
@@ -155,16 +152,15 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?) {
             ItemsList()
 
             LaunchedEffect(Unit) {
-                when (val text = uiState.message) {
+                when (val text = uiState.content.message) {
                     null -> Toast.makeText(
                         context, "No text has been detected in the image", Toast.LENGTH_SHORT
                     ).show()
 
                     else -> {
                         val fileName = "photo_${System.currentTimeMillis()}.png"
-                        val bmp = photo!!
                         context.openFileOutput(fileName, Context.MODE_PRIVATE).use { out ->
-                            bmp.compress(Bitmap.CompressFormat.PNG, 100, out)
+                            uiState.content.bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
                         }
 
                         // la je crée la fiche dans le paper et sa récupere aussi l'id de la fiche
@@ -173,12 +169,14 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?) {
 
                         val cleanText = text.lowercase()
 
+                        val targetLanguage = "fr"
+
                         // appeler l'api de traduction ici
-                        TranslateApi.translate(cleanText, "fr") {
+                        TranslateAPI.translate(cleanText, targetLanguage) {
                             if (it != null) {
                                 PhotoRepository.updateTranslation(
                                     id = newRecord.id,
-                                    targetLanguage = "fr",
+                                    targetLanguage = targetLanguage,
                                     translatedText = it
                                 )
                             }

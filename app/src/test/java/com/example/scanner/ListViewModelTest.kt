@@ -8,6 +8,7 @@ import com.example.scanner.common.VisionRequest
 import com.example.scanner.common.VisionResponse
 import com.example.scanner.list.ListUiState
 import com.example.scanner.list.ListViewModel
+import com.example.scanner.list.SuccessContent
 import org.junit.Assert
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -57,12 +58,12 @@ class ListViewModelTest {
 
         // Assert
         Assert.assertEquals(
-            ListUiState.Success(sampleSuccessResponse.responses
-                .first()
-                .textAnnotations
-                ?.first()
-                ?.description),
-            viewModel.uiStateFlow.value
+            ListUiState.Success(
+                SuccessContent(
+                    message = sampleSuccessResponse.responses.first().textAnnotations?.first()?.description,
+                    bitmap = bitmap
+                )
+            ), viewModel.uiStateFlow.value
         )
     }
 
@@ -79,8 +80,7 @@ class ListViewModelTest {
 
         // Assert
         Assert.assertEquals(
-            ListUiState.Error(sampleFailureResponse.message!!),
-            viewModel.uiStateFlow.value
+            ListUiState.Error(sampleFailureResponse.message!!), viewModel.uiStateFlow.value
         )
     }
 }

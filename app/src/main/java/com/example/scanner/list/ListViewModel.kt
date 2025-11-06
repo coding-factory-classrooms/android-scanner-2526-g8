@@ -15,10 +15,14 @@ import retrofit2.Response
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 
+data class SuccessContent(
+    val message: String?, val bitmap: Bitmap
+)
+
 sealed class ListUiState {
     data object Initial : ListUiState()
     data object Loading : ListUiState()
-    data class Success(val message: String?) : ListUiState()
+    data class Success(val content: SuccessContent) : ListUiState()
     data class Error(val error: String) : ListUiState()
 }
 
@@ -35,12 +39,11 @@ class ListViewModel : ViewModel() {
         return Base64.getEncoder().encodeToString(imageBytes)
     }
 
-    fun sendImageToAPI(bitmap: Bitmap, targetLang: String = "fr") {
+    fun sendImageToAPI(bitmap: Bitmap) {
         val imageString = getEncodedStringFromBitmap(bitmap)
 
         val call = api.detectText(
-            "AIzaSyAoSwwDOVrguBX1NqH3N8ebzUkXr_gMamU",
-            VisionRequest(
+            "AIzaSyAoSwwDOVrguBX1NqH3N8ebzUkXr_gMamU", VisionRequest(
                 requests = listOf(
                     RequestItem(
                         image = Image(content = imageString),
@@ -53,20 +56,20 @@ class ListViewModel : ViewModel() {
         uiStateFlow.value = ListUiState.Loading
 
         call.enqueue(object : Callback<VisionResponse> {
-            override fun onResponse(call: Call<VisionResponse>, response: Response<VisionResponse>) {
+            override fun onResponse(
+                call: Call<VisionResponse>,
+                response: Response<VisionResponse>
+            ) {
                 if (!response.isSuccessful) {
                     uiStateFlow.value = ListUiState.Error("HTTP ${response.code()}")
                     return
                 }
 
-                val msg = response.body()
-                    ?.responses
-                    ?.firstOrNull()
-                    ?.textAnnotations
-                    ?.firstOrNull()
-                    ?.description
+                val msg =
+                    response.body()?.responses?.firstOrNull()?.textAnnotations?.firstOrNull()?.description
 
-                uiStateFlow.value = ListUiState.Success(msg)
+                uiStateFlow.value =
+                    ListUiState.Success(SuccessContent(bitmap = bitmap, message = msg))
             }
 
             override fun onFailure(call: Call<VisionResponse>, t: Throwable) {
