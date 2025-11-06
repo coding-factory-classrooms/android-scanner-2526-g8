@@ -12,18 +12,13 @@ class DetailsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val recordId = intent.getStringExtra("record_id")
+
         enableEdgeToEdge()
 
         setContent {
             ScannerTheme {
-                DetailsScreen(
-                    context = this,
-                    intent = intent,
-                    onFinish = {
-                        startActivity(Intent(this, ListActivity::class.java))
-                        finish()
-                    }
-                )
+                DetailsScreen(recordId)
             }
         }
     }

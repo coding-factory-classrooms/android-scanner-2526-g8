@@ -1,15 +1,12 @@
-package com.example.scanner.Paper
+package com.example.scanner.photo
 
 import io.paperdb.Paper
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
+import java.util.UUID
 
 object PhotoRepository {
     private const val BOOK = "photos"
     private const val INDEX_KEY = "index"
-    private const val TIME_ZONE_EU = "Europe/Berlin"
-    private val displayFmt = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
 
     private fun readIndex(): MutableList<String> =
         (Paper.book(BOOK).read(INDEX_KEY, emptyList<String>()) ?: emptyList()).toMutableList()
@@ -19,15 +16,13 @@ object PhotoRepository {
     }
 
     // sert à créer une nouvelle photo
-    fun createFrom(imagePath: String, ocrText: String): PhotoRecord {
+    fun createFrom(imagePath: String, ocrText: String): PhotoModel {
         val id = UUID.randomUUID().toString()
-        val now = Calendar.getInstance(TimeZone.getTimeZone(TIME_ZONE_EU))
-        val rec = PhotoRecord(
+        val rec = PhotoModel(
             id = id,
             imagePath = imagePath,
             text = ocrText,
-            createdAtEpochMs = now.timeInMillis,
-            createdAtDisplay = displayFmt.format(now.time),
+            createdAtEpochMs = System.currentTimeMillis(),
             isFavorite = false
         )
         val book = Paper.book(BOOK)
@@ -35,37 +30,41 @@ object PhotoRepository {
         val idx = readIndex()
         idx.add(0, id)
         writeIndex(idx)
+
         return rec
     }
 
     // sert à récupérer toutes les photos triées par date décroissante
-    fun getAll(): List<PhotoRecord> =
-        readIndex().mapNotNull { Paper.book(BOOK).read<PhotoRecord>("photo:$it", null) }
+    fun getAll(): List<PhotoModel> {
+        return readIndex().mapNotNull { Paper.book(BOOK).read<PhotoModel>("photo:$it") }
             .sortedByDescending { it.createdAtEpochMs }
+    }
 
     // sert à récupérer une photo par son ID
-    fun get(id: String): PhotoRecord? = Paper.book(BOOK).read("photo:$id", null)
+    fun get(id: String?): PhotoModel? {
+        if (id == null) return null
+
+        return Paper.book(BOOK).read("photo:$id", null)
+    }
 
     // sert à basculer le statut favori d'une photo
     fun toggleFavorite(id: String) {
         val book = Paper.book(BOOK)
-        val cur = book.read<PhotoRecord>("photo:$id", null) ?: return
+        val cur = book.read<PhotoModel>("photo:$id", null) ?: return
         book.write("photo:$id", cur.copy(isFavorite = !cur.isFavorite))
     }
 
     // sert à mettre à jour la traduction d'une photo
     fun updateTranslation(
-        id: String,
-        targetLanguage: String,
-        translatedText: String
+        id: String, targetLanguage: String, translatedText: String
     ): Boolean {
         val book = Paper.book(BOOK)
-        val cur = book.read<PhotoRecord>("photo:$id", null) ?: return false
+        val cur = book.read<PhotoModel>("photo:$id", null) ?: return false
 
-        val lang = targetLanguage.lowercase() // en mode si t'écris EN sa écris en car j'ai peurs que avec des api ou autre sa fait n'importe quoi
+        val lang =
+            targetLanguage.lowercase() // en mode si t'écris EN sa écris en car j'ai peurs que avec des api ou autre sa fait n'importe quoi
         val updated = cur.copy(
-            targetLanguage = lang,
-            translatedText = translatedText
+            targetLanguage = lang, translatedText = translatedText
 
         )
 
@@ -77,7 +76,7 @@ object PhotoRepository {
     // sert a supprimer une photo
     fun delete(id: String) {
         val book = Paper.book(BOOK)
-        val cur = book.read<PhotoRecord>("photo:$id", null) ?: return
+        val cur = book.read<PhotoModel>("photo:$id", null) ?: return
         runCatching { File(cur.imagePath).takeIf { it.exists() }?.delete() }
         book.delete("photo:$id")
         val idx = readIndex()
@@ -85,13 +84,12 @@ object PhotoRepository {
         writeIndex(idx)
     }
 
-
     fun query(
         text: String? = null,
         onlyFavorites: Boolean = false,
         fromMs: Long? = null,
         toMs: Long? = null
-    ): List<PhotoRecord> {
+    ): List<PhotoModel> {
         val q = text?.trim().orEmpty()
         val hasText = q.isNotEmpty()
 
@@ -102,6 +100,4 @@ object PhotoRepository {
             .filter { rec -> if (!hasText) true else rec.text.contains(q, ignoreCase = true) }
             .toList()
     }
-
-    fun endOfDayMs(ms: Long): Long = ms + (24L * 60 * 60 * 1000) - 1L
 }

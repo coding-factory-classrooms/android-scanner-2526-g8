@@ -1,4 +1,4 @@
-package com.example.scanner
+package com.example.scanner.common
 
 data class VisionRequest(
     val requests: List<RequestItem>

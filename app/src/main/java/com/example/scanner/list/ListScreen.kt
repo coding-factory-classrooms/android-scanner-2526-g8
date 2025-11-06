@@ -4,11 +4,24 @@ package com.example.scanner.list
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,8 +30,24 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,13 +59,15 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.scanner.Paper.PhotoRecord
-import com.example.scanner.Paper.PhotoRepository
 import com.example.scanner.R
 import com.example.scanner.details.DetailsActivity
+import com.example.scanner.photo.PhotoModel
+import com.example.scanner.photo.PhotoRepository
 import com.example.scanner.test.TestActivity
 import com.example.scanner.ui.theme.ScannerTheme
-import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun ListScreen(vm: ListViewModel = viewModel()) {
@@ -72,21 +103,20 @@ fun ListScreen(vm: ListViewModel = viewModel()) {
                         .navigationBarsPadding()
                 )
             }
-        },
-        floatingActionButtonPosition = FabPosition.End
+        }, floatingActionButtonPosition = FabPosition.End
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
-            ListScreenBody(uiState, photoState.value, vm)
+            ListScreenBody(uiState, photoState.value)
         }
     }
 }
 
 @Composable
-fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
+fun ListScreenBody(uiState: ListUiState, photo: Bitmap?) {
     val context = LocalContext.current
 
     when (uiState) {
@@ -97,12 +127,7 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
         }
 
         // afficher la liste et ouvrir un détail quand on clique une row existante
-        ListUiState.Initial -> ItemsList { rec ->
-            val intent = Intent(context, DetailsActivity::class.java).apply {
-                putExtra("PHOTO_ID", rec.id)
-            }
-            context.startActivity(intent)
-        }
+        ListUiState.Initial -> ItemsList()
 
         ListUiState.Loading -> {
             Column(
@@ -120,34 +145,44 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
                 null -> {
                     LaunchedEffect(Unit) {
                         Toast.makeText(
-                            context,
-                            "No text has been detected in the image",
-                            Toast.LENGTH_SHORT
+                            context, "No text has been detected in the image", Toast.LENGTH_SHORT
                         ).show()
                     }
-                    ItemsList { rec ->
-                        val intent = Intent(context, DetailsActivity::class.java).apply {
-                            putExtra("PHOTO_ID", rec.id)
-                        }
-                        context.startActivity(intent)
-                    }
+                    ItemsList()
                 }
                 //  on sauvegarde, on crée la fiche, puis on ouvre le détail
                 else -> {
-                    LaunchedEffect(text) {
+                    LaunchedEffect(Unit) {
                         val fileName = "photo_${System.currentTimeMillis()}.png"
-                        val file = File(context.filesDir, fileName)
-                        val bmp = requireNotNull(photo)
+                        val bmp = photo!!
                         context.openFileOutput(fileName, Context.MODE_PRIVATE).use { out ->
-                            bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+                            bmp.compress(Bitmap.CompressFormat.PNG, 100, out)
                         }
-                        val imagePath = file.absolutePath
 
-                        val photoId = vm.savePhotoRecord(imagePath = imagePath, ocrText = text)
+                        // la je crée la fiche dans le paper et sa récupere aussi l'id de la fiche
+                        val newRecord =
+                            PhotoRepository.createFrom(imagePath = fileName, ocrText = text)
 
-                        val intent = Intent(context, DetailsActivity::class.java).apply {
-                            putExtra("PHOTO_ID", photoId)
+                        // appeler l'api de traduction ici
+                        try {/*val translated =  la tu refait ton truck chelou de réussite ou pas etc */
+
+                            // la t'apelle la maj de la fiche avec la traduction
+                            /* com.example.scanner.photo.PhotoRepository.updateTranslation(
+                                 id = photoId,
+                                 targetLanguage = "en",          // ou une variable choisie
+                                 translatedText = translated
+                             )*/
+                        } catch (t: Throwable) {
+                            // gestion d'erreur tmtc
                         }
+
+                        //  ouvrir les détails via l'id
+                        val intent = Intent(
+                            context, DetailsActivity::class.java
+                        ).apply {
+                            putExtra("record_id", newRecord.id)
+                        }
+
                         context.startActivity(intent)
                     }
                 }
@@ -158,9 +193,9 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
 
 
 @Composable
-fun ItemsList(
-    onOpen: (PhotoRecord) -> Unit = {}
-) {
+fun ItemsList() {
+    val context = LocalContext.current
+
     var queryText by remember { mutableStateOf(TextFieldValue("")) }
     var onlyFavorites by remember { mutableStateOf(false) }
     var refreshTick by remember { mutableStateOf(0) } // force à recalculer les infos
@@ -184,7 +219,12 @@ fun ItemsList(
             items(records, key = { it.id }) { rec ->
                 PhotoRow(
                     record = rec,
-                    onClick = { onOpen(rec) },
+                    onClick = {
+                        val intent = Intent(context, DetailsActivity::class.java)
+
+                        intent.putExtra("record_id", rec.id)
+                        context.startActivity(intent)
+                    },
                     onToggleFavorite = {
                         PhotoRepository.toggleFavorite(rec.id)
                         refreshTick++
@@ -194,7 +234,7 @@ fun ItemsList(
                         refreshTick++
                     }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -230,39 +270,38 @@ private fun FiltersBarSimple(
 
 @Composable
 private fun PhotoRow(
-    record: PhotoRecord,
-    onClick: () -> Unit,
-    onToggleFavorite: () -> Unit,
-    onDelete: () -> Unit
+    record: PhotoModel, onClick: () -> Unit, onToggleFavorite: () -> Unit, onDelete: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        val bmp = remember(record.imagePath) {
-            android.graphics.BitmapFactory.decodeFile(record.imagePath)
-        }
-        bmp?.let {
-            androidx.compose.foundation.Image(
-                bitmap = it.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onClick() }, // clic sur la vignette ouvre le détail
-                contentScale = ContentScale.Crop
-            )
-            Spacer(Modifier.width(12.dp))
-        }
+    val context = LocalContext.current
 
-        Column(
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .clickable { onClick() }
+        .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        val fis = context.openFileInput(record.imagePath)
+        val bmp = BitmapFactory.decodeStream(fis)
+        fis.close()
+
+        Image(
+            bitmap = bmp.asImageBitmap(),
+            contentDescription = null,
             modifier = Modifier
-                .weight(1f)
-                .clickable { onClick() }
-        ) {
-            Text(record.createdAtDisplay)
+                .size(64.dp)
+                .clip(RoundedCornerShape(8.dp)),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            val date = Calendar.getInstance().apply {
+                timeInMillis = record.createdAtEpochMs
+            }
+
+            val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
+            Text(formatter.format(date.time))
+
             val preview = if (record.text.length > 80) record.text.take(80) + "…" else record.text
             Text(preview)
         }
@@ -275,8 +314,7 @@ private fun PhotoRow(
         }
         IconButton(onClick = onDelete) {
             Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Supprimer"
+                imageVector = Icons.Default.Delete, contentDescription = "Supprimer"
             )
         }
     }
@@ -286,8 +324,7 @@ private fun PhotoRow(
 @Composable
 fun CameraButton(onPhotoTaken: (Bitmap?) -> Unit, modifier: Modifier = Modifier) {
     val takePicturePreview = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview(),
-        onResult = onPhotoTaken
+        contract = ActivityResultContracts.TakePicturePreview(), onResult = onPhotoTaken
     )
     Button(
         onClick = { takePicturePreview.launch(null) },
@@ -305,9 +342,7 @@ fun CameraButton(onPhotoTaken: (Bitmap?) -> Unit, modifier: Modifier = Modifier)
 @Composable
 fun TestButton(onButtonClick: () -> Unit, modifier: Modifier = Modifier) {
     Button(
-        onClick = onButtonClick,
-        contentPadding = PaddingValues(8.dp),
-        modifier = modifier
+        onClick = onButtonClick, contentPadding = PaddingValues(8.dp), modifier = modifier
     ) {
         Text(text = "test")
     }

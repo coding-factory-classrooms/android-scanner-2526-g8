@@ -1,98 +1,99 @@
 // kotlin
 package com.example.scanner.details
 
-import android.content.Context
-import android.content.Intent
+import android.app.Activity
 import android.graphics.BitmapFactory
+import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Divider
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.scanner.Paper.PhotoRepository
+import com.example.scanner.photo.PhotoRepository
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsScreen(
-    context: Context,
-    intent: Intent,
-    onFinish: () -> Unit
+    recordId: String?,
 ) {
+    val context = LocalContext.current
 
-    // j'extrait les infos de l'intent, le photo_ID est pour la version on clique sur un détail et celle de legacy est pour la version je prend la photo
-    val photoId = remember(intent) { intent.getStringExtra("PHOTO_ID") }
-    val legacyFileName = remember(intent) { intent.getStringExtra("photo_filename") }
-    val legacyText = remember(intent) { intent.getStringExtra("photo_text_content") }
+    val record = PhotoRepository.get(recordId)
 
-    val recordFromRepo = remember(photoId) { photoId?.let { PhotoRepository.get(it) } }
+    if (record == null) {
+        Toast.makeText(context, "L'enregistrement n'existe pas", Toast.LENGTH_SHORT).show()
+        (context as Activity).finish()
 
-    val displayBitmap = remember(recordFromRepo, legacyFileName) {
-        recordFromRepo?.let { BitmapFactory.decodeFile(it.imagePath) }
-            ?: legacyFileName?.let { fn ->
-                context.openFileInput(fn).use { BitmapFactory.decodeStream(it) }
-            }
+        return
     }
-    val displayText = recordFromRepo?.text ?: (legacyText ?: "")
-    val displayDate = recordFromRepo?.createdAtDisplay
-    val displayTranslation = recordFromRepo?.translatedText
+
+    val fis = context.openFileInput(record.imagePath)
+    val bmp = BitmapFactory.decodeStream(fis)
+    fis.close()
+
+    val date = Calendar.getInstance().apply {
+        timeInMillis = record.createdAtEpochMs
+    }
+
+    val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
+
+    val displayDate = formatter.format(date.time)
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Détails") },
-                navigationIcon = {
-                    IconButton(onClick = onFinish) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Retour")
-                    }
+            TopAppBar(title = { Text("Détails") }, navigationIcon = {
+                IconButton(onClick = { (context as Activity).finish() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
                 }
-            )
-        }
-    ) { innerPadding ->
+            })
+        }) { innerPadding ->
         Box(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            if (displayBitmap == null && displayText.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Aucune donnée.")
-                }
-            } else {
-                Column(
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Image(
+                    bitmap = bmp.asImageBitmap(),
+                    contentDescription = null,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    displayBitmap?.let {
-                        Image(
-                            bitmap = it.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(240.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                    displayDate?.let { Text("Date : $it") }
-                    Text("Texte OCR :")
-                    Text(displayText)
-                    Divider()
-                    Text("Traduction :")
-                    Text(displayTranslation ?: "— Non traduit car j'ai eu la flemme hier —")
-                }
+                        .fillMaxWidth()
+                        .height(240.dp),
+                    contentScale = ContentScale.Crop
+                )
+
+                Text("Date : $displayDate")
+                Text("Texte OCR : ${record.text}")
+
+                HorizontalDivider()
+
+                Text("Traduction : ${record.translatedText}")
             }
         }
     }

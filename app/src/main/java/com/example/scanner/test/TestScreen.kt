@@ -22,7 +22,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
 import com.example.scanner.list.ListActivity
 import com.example.scanner.list.ListViewModel
+import com.example.scanner.photo.PhotoRepository
 import com.example.scanner.ui.theme.ScannerTheme
+import java.io.File
 
 @Composable
 fun TestScreen(
@@ -102,7 +104,7 @@ fun Button1(vm: ListViewModel = viewModel()) {
 }
 
 @Composable
-fun Button2(vm: ListViewModel = viewModel()) {
+fun Button2() {
     val context = LocalContext.current
 
     Button(
@@ -112,7 +114,7 @@ fun Button2(vm: ListViewModel = viewModel()) {
 
             // Sauvegarde une copie locale pour simuler une photo prise
             val fileName = "test_${System.currentTimeMillis()}.png"
-            val file = java.io.File(context.filesDir, fileName)
+            val file = File(context.filesDir, fileName)
             // sauvegarde de la bitmap dans le fichier
             context.openFileOutput(fileName, Context.MODE_PRIVATE).use { out ->
                 bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
@@ -124,11 +126,10 @@ fun Button2(vm: ListViewModel = viewModel()) {
             val fakeOcrText = "Ceci est un texte OCR simulé pour les tests 3333."
 
             // Création de la fiche dans paper via le vm
-            val photoId = vm.savePhotoRecord(imagePath = imagePath, ocrText = fakeOcrText)
+            PhotoRepository.createFrom(imagePath = imagePath, ocrText = fakeOcrText)
 
             // Retourne automatiquement à la liste pour voir le résultat
-            val intent = Intent(context, com.example.scanner.list.ListActivity::class.java)
-            intent.putExtra("PHOTO_ID", photoId)
+            val intent = Intent(context, ListActivity::class.java)
             context.startActivity(intent)
         },
         modifier = Modifier.fillMaxWidth()
