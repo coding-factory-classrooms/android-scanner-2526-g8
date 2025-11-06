@@ -48,8 +48,6 @@ class ListViewModelTest {
     fun `Valid response produces Success state`() {
         // Arrange
         val viewModel = ListViewModel()
-        val mockApi = mock<FakeSuccessGoogleVisionAPI>()
-
         viewModel.api = FakeSuccessGoogleVisionAPI()
 
         val bitmap = mock(Bitmap::class.java)
@@ -72,8 +70,6 @@ class ListViewModelTest {
     fun `Error response produces Error state`() {
         // Arrange
         val viewModel = ListViewModel()
-        val mockApi = mock<FakeFailureGoogleVisionAPI>()
-
         viewModel.api = FakeFailureGoogleVisionAPI()
 
         val bitmap = mock(Bitmap::class.java)
