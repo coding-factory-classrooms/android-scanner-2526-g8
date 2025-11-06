@@ -70,7 +70,7 @@ class ListViewModel : ViewModel() {
             }
 
             override fun onFailure(call: Call<VisionResponse>, t: Throwable) {
-                uiStateFlow.value = ListUiState.Error("API call failed: ${t.message ?: "Unknown error"}")
+                uiStateFlow.value = ListUiState.Error(t.message ?: "Unknown error")
             }
         })
     }

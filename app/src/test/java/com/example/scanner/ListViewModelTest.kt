@@ -10,11 +10,12 @@ import com.example.scanner.list.ListUiState
 import com.example.scanner.list.ListViewModel
 import org.junit.Assert
 import org.junit.Test
-import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import retrofit2.Call
 import retrofit2.mock.Calls
+import java.io.IOException
 
-val sampleResponse: VisionResponse = VisionResponse(
+val sampleSuccessResponse: VisionResponse = VisionResponse(
     listOf(
         OcrResult(
             listOf(TextAnnotation("sample response text"))
@@ -22,34 +23,67 @@ val sampleResponse: VisionResponse = VisionResponse(
     )
 )
 
+val sampleFailureResponse = IOException("Error 500")
 
-class FakeGoogleVisionAPI : GoogleVisionAPI {
+
+class FakeSuccessGoogleVisionAPI : GoogleVisionAPI {
     override fun detectText(
         apiKey: String, body: VisionRequest
     ): Call<VisionResponse> {
-        return Calls.response(sampleResponse)
+        return Calls.response(sampleSuccessResponse)
+    }
+}
+
+
+class FakeFailureGoogleVisionAPI : GoogleVisionAPI {
+    override fun detectText(
+        apiKey: String, body: VisionRequest
+    ): Call<VisionResponse> {
+        return Calls.failure(sampleFailureResponse)
     }
 }
 
 class ListViewModelTest {
     @Test
-    fun `Valid response produces Success`() {
+    fun `Valid response produces Success state`() {
         // Arrange
         val viewModel = ListViewModel()
-        viewModel.api = FakeGoogleVisionAPI()
+        val mockApi = mock<FakeSuccessGoogleVisionAPI>()
 
-        val bitmap = Mockito.mock(Bitmap::class.java)
+        viewModel.api = FakeSuccessGoogleVisionAPI()
+
+        val bitmap = mock(Bitmap::class.java)
 
         //Act
         viewModel.sendImageToAPI(bitmap)
 
         // Assert
         Assert.assertEquals(
-            ListUiState.Success(sampleResponse.responses
+            ListUiState.Success(sampleSuccessResponse.responses
                 .first()
                 .textAnnotations
                 ?.first()
                 ?.description),
+            viewModel.uiStateFlow.value
+        )
+    }
+
+    @Test
+    fun `Error response produces Error state`() {
+        // Arrange
+        val viewModel = ListViewModel()
+        val mockApi = mock<FakeFailureGoogleVisionAPI>()
+
+        viewModel.api = FakeFailureGoogleVisionAPI()
+
+        val bitmap = mock(Bitmap::class.java)
+
+        //Act
+        viewModel.sendImageToAPI(bitmap)
+
+        // Assert
+        Assert.assertEquals(
+            ListUiState.Error(sampleFailureResponse.message!!),
             viewModel.uiStateFlow.value
         )
     }
