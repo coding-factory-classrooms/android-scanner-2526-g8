@@ -3,13 +3,12 @@ package com.example.scanner.list
 import android.graphics.Bitmap
 import android.util.Base64
 import androidx.lifecycle.ViewModel
-import com.example.scanner.Feature
-import com.example.scanner.GoogleVisionAPI
-import com.example.scanner.Image
-import com.example.scanner.Paper.PhotoRepository
-import com.example.scanner.RequestItem
-import com.example.scanner.VisionRequest
-import com.example.scanner.VisionResponse
+import com.example.scanner.common.Feature
+import com.example.scanner.common.GoogleVisionAPI
+import com.example.scanner.common.Image
+import com.example.scanner.common.RequestItem
+import com.example.scanner.common.VisionRequest
+import com.example.scanner.common.VisionResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import retrofit2.Call
 import retrofit2.Callback
@@ -35,20 +34,6 @@ class ListViewModel : ViewModel() {
     private val api: GoogleVisionAPI = retrofit.create(GoogleVisionAPI::class.java)
 
     val uiStateFlow = MutableStateFlow<ListUiState>(ListUiState.Initial)
-
-    // fonction pour sauvegarder le record dans le paper
-    // ListViewModel.kt
-    fun savePhotoRecord(
-        imagePath: String,
-        ocrText: String
-    ): String {
-        val rec = com.example.scanner.Paper.PhotoRepository.createFrom(
-            imagePath = imagePath,
-            ocrText = ocrText
-        )
-        return rec.id
-    }
-
 
     private fun getEncodedStringFromBitmap(bitmap: Bitmap): String {
         val outputStream = ByteArrayOutputStream()

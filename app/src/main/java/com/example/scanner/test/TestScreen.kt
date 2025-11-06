@@ -80,7 +80,6 @@ fun Button1(vm: ListViewModel= viewModel()) {
     val context = LocalContext.current
 
     Button(
-
         onClick = {
             val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.test_img)
             vm.sendImageToAPI(bitmap) },

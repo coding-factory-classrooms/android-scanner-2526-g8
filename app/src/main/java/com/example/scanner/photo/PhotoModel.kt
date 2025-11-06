@@ -1,12 +1,11 @@
-package com.example.scanner.Paper
+package com.example.scanner.photo
 
-// la classe pour paper
-data class PhotoRecord(
+// la classe pour les photos
+data class PhotoModel(
     val id: String,
     val imagePath: String,
     val text: String,
     val createdAtEpochMs: Long,
-    val createdAtDisplay: String,
     val isFavorite: Boolean = false,
     val targetLanguage: String? = null,
     val translatedText: String? = null
