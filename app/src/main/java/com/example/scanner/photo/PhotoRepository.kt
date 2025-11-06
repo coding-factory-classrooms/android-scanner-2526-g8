@@ -1,5 +1,6 @@
 package com.example.scanner.photo
 
+import com.example.scanner.TranslateApi
 import io.paperdb.Paper
 import java.io.File
 import java.util.UUID
@@ -53,6 +54,21 @@ object PhotoRepository {
         val cur = book.read<PhotoModel>("photo:$id", null) ?: return
         book.write("photo:$id", cur.copy(isFavorite = !cur.isFavorite))
     }
+
+    fun translatePhotoText(photoId: String, targetLang: String, onDone: (Boolean) -> Unit) {
+        val photo = PhotoRepository.get(photoId) ?: return onDone(false)
+        val originalText = photo.text
+
+        TranslateApi.translate(originalText, targetLang) { translated ->
+            if (translated != null) {
+                PhotoRepository.updateTranslation(photoId, targetLang, translated)
+                onDone(true)
+            } else {
+                onDone(false)
+            }
+        }
+    }
+
 
     // sert à mettre à jour la traduction d'une photo
     fun updateTranslation(

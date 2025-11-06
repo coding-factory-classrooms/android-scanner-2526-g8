@@ -37,6 +37,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -55,10 +56,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
+import com.example.scanner.TranslateApi
 import com.example.scanner.details.DetailsActivity
 import com.example.scanner.photo.PhotoModel
 import com.example.scanner.photo.PhotoRepository
@@ -158,17 +161,20 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?) {
                         val newRecord =
                             PhotoRepository.createFrom(imagePath = fileName, ocrText = text)
 
-                        // appeler l'api de traduction ici
-                        try {/*val translated =  la tu refait ton truck chelou de réussite ou pas etc */
+                        val cleanText = text.lowercase()
 
-                            // la t'apelle la maj de la fiche avec la traduction
-                            /* com.example.scanner.photo.PhotoRepository.updateTranslation(
-                                 id = photoId,
-                                 targetLanguage = "en",          // ou une variable choisie
-                                 translatedText = translated
-                             )*/
-                        } catch (t: Throwable) {
-                            // gestion d'erreur tmtc
+                        // appeler l'api de traduction ici
+                        TranslateApi.translate(cleanText, "fr") { translated ->
+                            if (translated != null) {
+                                PhotoRepository.updateTranslation(
+                                    id = newRecord.id,
+                                    targetLanguage = "fr",
+                                    translatedText = translated
+                                )
+                                Toast.makeText(context, "Translation saved!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Translation failed", Toast.LENGTH_SHORT).show()
+                            }
                         }
 
                         //  ouvrir les détails via l'id
@@ -290,7 +296,12 @@ private fun PhotoRow(
             Text(formatter.format(date.time))
 
             val preview = if (record.text.length > 80) record.text.take(80) + "…" else record.text
-            Text(preview)
+            Text("OCR: $preview")
+
+            record.translatedText?.let { translated ->
+                val tPreview = if (translated.length > 80) translated.take(80) + "…" else translated
+                Text("Translation: $tPreview", style = MaterialTheme.typography.bodySmall)
+            }
         }
 
         IconButton(onClick = onToggleFavorite) {

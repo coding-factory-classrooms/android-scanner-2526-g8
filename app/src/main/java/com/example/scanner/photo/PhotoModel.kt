@@ -8,5 +8,5 @@ data class PhotoModel(
     val createdAtEpochMs: Long,
     val isFavorite: Boolean = false,
     val targetLanguage: String? = null,
-    val translatedText: String? = null
+    var translatedText: String? = null
 )

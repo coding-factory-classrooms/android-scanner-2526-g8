@@ -42,10 +42,10 @@ class ListViewModel : ViewModel() {
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
     }
 
-    fun sendImageToAPI(bitmap: Bitmap) {
+    fun sendImageToAPI(bitmap: Bitmap, targetLang: String = "fr") {
         val imageString = getEncodedStringFromBitmap(bitmap)
 
-        val call: Call<VisionResponse> = api.detectText(
+        val call = api.detectText(
             "AIzaSyAoSwwDOVrguBX1NqH3N8ebzUkXr_gMamU",
             VisionRequest(
                 requests = listOf(
@@ -61,17 +61,19 @@ class ListViewModel : ViewModel() {
 
         call.enqueue(object : Callback<VisionResponse> {
             override fun onResponse(call: Call<VisionResponse>, response: Response<VisionResponse>) {
-                if (response.isSuccessful) {
-                    val msg = response.body()
-                        ?.responses
-                        ?.firstOrNull()
-                        ?.textAnnotations
-                        ?.firstOrNull()
-                        ?.description
-                    uiStateFlow.value = ListUiState.Success(msg)
-                } else {
+                if (!response.isSuccessful) {
                     uiStateFlow.value = ListUiState.Error("HTTP ${response.code()}")
+                    return
                 }
+
+                val msg = response.body()
+                    ?.responses
+                    ?.firstOrNull()
+                    ?.textAnnotations
+                    ?.firstOrNull()
+                    ?.description
+
+                uiStateFlow.value = ListUiState.Success(msg)
             }
 
             override fun onFailure(call: Call<VisionResponse>, t: Throwable) {
