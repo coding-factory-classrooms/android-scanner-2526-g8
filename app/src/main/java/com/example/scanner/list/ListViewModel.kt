@@ -1,7 +1,6 @@
 package com.example.scanner.list
 
 import android.graphics.Bitmap
-import android.util.Base64
 import androidx.lifecycle.ViewModel
 import com.example.scanner.common.Feature
 import com.example.scanner.common.GoogleVisionAPI
@@ -13,9 +12,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayOutputStream
+import java.util.Base64
 
 sealed class ListUiState {
     data object Initial : ListUiState()
@@ -25,13 +23,7 @@ sealed class ListUiState {
 }
 
 class ListViewModel : ViewModel() {
-
-    private val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl("https://vision.googleapis.com/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    private val api: GoogleVisionAPI = retrofit.create(GoogleVisionAPI::class.java)
+    lateinit var api: GoogleVisionAPI
 
     val uiStateFlow = MutableStateFlow<ListUiState>(ListUiState.Initial)
 
@@ -39,7 +31,8 @@ class ListViewModel : ViewModel() {
         val outputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         val imageBytes = outputStream.toByteArray()
-        return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+
+        return Base64.getEncoder().encodeToString(imageBytes)
     }
 
     fun sendImageToAPI(bitmap: Bitmap, targetLang: String = "fr") {

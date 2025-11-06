@@ -62,11 +62,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
 import com.example.scanner.TranslateApi
+import com.example.scanner.common.GoogleVisionAPI
 import com.example.scanner.details.DetailsActivity
 import com.example.scanner.photo.PhotoModel
 import com.example.scanner.photo.PhotoRepository
 import com.example.scanner.test.TestActivity
 import com.example.scanner.ui.theme.ScannerTheme
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -76,6 +79,13 @@ fun ListScreen(vm: ListViewModel = viewModel()) {
     val context = LocalContext.current
     val uiState by vm.uiStateFlow.collectAsState()
     val photoState = remember { mutableStateOf<Bitmap?>(null) }
+
+    val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl("https://vision.googleapis.com/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    vm.api =  retrofit.create(GoogleVisionAPI::class.java)
 
     Scaffold(
         floatingActionButton = {

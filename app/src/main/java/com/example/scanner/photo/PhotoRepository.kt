@@ -17,23 +17,23 @@ object PhotoRepository {
     }
 
     // sert à créer une nouvelle photo
-    fun createFrom(imagePath: String, ocrText: String): PhotoModel {
-        val id = UUID.randomUUID().toString()
-        val rec = PhotoModel(
-            id = id,
-            imagePath = imagePath,
-            text = ocrText,
-            createdAtEpochMs = System.currentTimeMillis(),
-            isFavorite = false
-        )
-        val book = Paper.book(BOOK)
-        book.write("photo:$id", rec)
-        val idx = readIndex()
-        idx.add(0, id)
-        writeIndex(idx)
+        fun createFrom(imagePath: String, ocrText: String): PhotoModel {
+            val id = UUID.randomUUID().toString()
+            val rec = PhotoModel(
+                id = id,
+                imagePath = imagePath,
+                text = ocrText,
+                createdAtEpochMs = System.currentTimeMillis(),
+                isFavorite = false
+            )
+            val book = Paper.book(BOOK)
+            book.write("photo:$id", rec)
+            val idx = readIndex()
+            idx.add(0, id)
+            writeIndex(idx)
 
-        return rec
-    }
+            return rec
+        }
 
     // sert à récupérer toutes les photos triées par date décroissante
     fun getAll(): List<PhotoModel> {

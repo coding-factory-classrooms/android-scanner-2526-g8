@@ -12,6 +12,7 @@ lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
 composeBom = "2025.10.01"
 mockitoCore = "5.20.0"
+paperdb = "2.7.2"
 retrofit = "3.0.0"
 turbine = "1.2.1"
 foundation = "1.9.4"
@@ -36,7 +37,9 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
+paperdb = { module = "io.github.pilgr:paperdb", version.ref = "paperdb" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+retrofit-mock = { module = "com.squareup.retrofit2:retrofit-mock", version.ref = "converterGson" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
