@@ -89,21 +89,7 @@ class ListViewModel : ViewModel() {
                     ?.firstOrNull()
                     ?.description
 
-                if (msg.isNullOrBlank()) {
-                    uiStateFlow.value = ListUiState.Error("No text detected.")
-                    return
-                }
-
-                val id = PhotoRepository.createFrom("path/to/image.jpg", msg).id
-
-                TranslateApi.translate(msg, targetLang) { translated ->
-                    if (translated != null) {
-                        PhotoRepository.updateTranslation(id, targetLang, translated)
-                        uiStateFlow.value = ListUiState.Success("Translated: $translated")
-                    } else {
-                        uiStateFlow.value = ListUiState.Error("Translation failed.")
-                    }
-                }
+                uiStateFlow.value = ListUiState.Success(msg)
             }
 
             override fun onFailure(call: Call<VisionResponse>, t: Throwable) {

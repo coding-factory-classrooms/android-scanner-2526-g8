@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -154,8 +155,10 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
                         // la je crée la fiche dans le paper et sa récupere aussi l'id de la fiche
                         val photoId = vm.savePhotoRecord(imagePath = imagePath, ocrText = text)
 
+                        val cleanText = text.lowercase()
+
                         // appeler l'api de traduction ici
-                        TranslateApi.translate(text, "fr") { translated ->
+                        TranslateApi.translate(cleanText, "fr") { translated ->
                             if (translated != null) {
                                 PhotoRepository.updateTranslation(
                                     id = photoId,

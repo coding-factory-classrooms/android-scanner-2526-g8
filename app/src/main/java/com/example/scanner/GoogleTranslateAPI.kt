@@ -11,7 +11,8 @@ object TranslateApi {
     private val client = OkHttpClient()
 
     fun translate(text: String, targetLang: String, callback: (String?) -> Unit) {
-        val encoded = URLEncoder.encode(text, "UTF-8")
+        val normalized = text.replace("\n", " ").replace("\r", "")
+        val encoded = URLEncoder.encode(normalized, "UTF-8")
         val url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$targetLang&dt=t&q=$encoded"
 
         val request = Request.Builder().url(url).build()
@@ -31,6 +32,7 @@ object TranslateApi {
             }
         })
     }
+
 
 
 }
