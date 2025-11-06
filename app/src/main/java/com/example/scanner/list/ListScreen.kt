@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -179,17 +180,17 @@ fun ListScreenBody(uiState: ListUiState) {
                                     targetLanguage = targetLanguage,
                                     translatedText = it
                                 )
+                                //  ouvrir les détails via l'id
+                                val intent = Intent(
+                                    context, DetailsActivity::class.java
+                                ).apply {
+                                    putExtra("record_id", newRecord.id)
+                                }
+
+                                context.startActivity(intent)
                             }
                         }
 
-                        //  ouvrir les détails via l'id
-                        val intent = Intent(
-                            context, DetailsActivity::class.java
-                        ).apply {
-                            putExtra("record_id", newRecord.id)
-                        }
-
-                        context.startActivity(intent)
                     }
                 }
             }
