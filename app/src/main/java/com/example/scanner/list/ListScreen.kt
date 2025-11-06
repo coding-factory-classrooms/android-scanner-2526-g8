@@ -14,15 +14,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +26,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -63,7 +60,6 @@ fun ListScreen(vm: ListViewModel = viewModel()) {
                         .navigationBarsPadding()
                         .height(80.dp)
                 )
-
                 TestButton(
                     onButtonClick = {
                         val intent = Intent(context, TestActivity::class.java)
@@ -99,7 +95,8 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
                 Text(text = uiState.error)
             }
         }
-        // ici c'est quand on clique sur une row et qu'on affiche les détails d'une image déjà scannée
+
+        // afficher la liste et ouvrir un détail quand on clique une row existante
         ListUiState.Initial -> ItemsList { rec ->
             val intent = Intent(context, DetailsActivity::class.java).apply {
                 putExtra("PHOTO_ID", rec.id)
@@ -118,9 +115,8 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
         }
 
         is ListUiState.Success -> {
-
-            // j'ai prit ma photo mais il n'y as aucun texte de détecté et j'ai une réponse API
             when (val text = uiState.message) {
+                // OCR a répondu mais aucun texte détecté
                 null -> {
                     LaunchedEffect(Unit) {
                         Toast.makeText(
@@ -136,39 +132,20 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
                         context.startActivity(intent)
                     }
                 }
-
+                //  on sauvegarde, on crée la fiche, puis on ouvre le détail
                 else -> {
-
-                    // Lier au fait que je viens de prendre la photo et après l'attente de l'ocr et une réussite
                     LaunchedEffect(text) {
-                        // sauvegarde fichier
                         val fileName = "photo_${System.currentTimeMillis()}.png"
-                        val file = java.io.File(context.filesDir, fileName)
+                        val file = File(context.filesDir, fileName)
                         val bmp = requireNotNull(photo)
                         context.openFileOutput(fileName, Context.MODE_PRIVATE).use { out ->
                             bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
                         }
                         val imagePath = file.absolutePath
 
-                        // la je crée la fiche dans le paper et sa récupere aussi l'id de la fiche
                         val photoId = vm.savePhotoRecord(imagePath = imagePath, ocrText = text)
 
-                        // appeler l'api de traduction ici
-                        try {
-                            /*val translated =  la tu refait ton truck chelou de réussite ou pas etc */
-
-                                // la t'apelle la maj de la fiche avec la traduction
-                               /* com.example.scanner.Paper.PhotoRepository.updateTranslation(
-                                    id = photoId,
-                                    targetLanguage = "en",          // ou une variable choisie
-                                    translatedText = translated
-                                )*/
-                        } catch (t: Throwable) {
-                            // gestion d'erreur tmtc
-                        }
-
-                        //  ouvrir les détails via l'id
-                        val intent = Intent(context, com.example.scanner.details.DetailsActivity::class.java).apply {
+                        val intent = Intent(context, DetailsActivity::class.java).apply {
                             putExtra("PHOTO_ID", photoId)
                         }
                         context.startActivity(intent)
@@ -179,36 +156,77 @@ fun ListScreenBody(uiState: ListUiState, photo: Bitmap?, vm: ListViewModel) {
     }
 }
 
+
 @Composable
 fun ItemsList(
     onOpen: (PhotoRecord) -> Unit = {}
 ) {
-    val recordsState = remember { mutableStateOf(PhotoRepository.getAll()) }
+    var queryText by remember { mutableStateOf(TextFieldValue("")) }
+    var onlyFavorites by remember { mutableStateOf(false) }
+    var refreshTick by remember { mutableStateOf(0) } // force un recalcul après favoris/suppression
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(
-            recordsState.value,
-            key = { it.id }
-        ) { record ->
-            PhotoRow(
-                record = record,
-                // le onOpen sert à ouvrir les détails d'une image déjà scannée il est remonté plus haut
-                onClick = { onOpen(record) },
-                // pour le favori en true/false
-                onToggleFavorite = {
-                    PhotoRepository.toggleFavorite(record.id)
-                    recordsState.value = PhotoRepository.getAll()
-                },
-                // pour la corbeille de suppression
-                onDelete = {
-                    PhotoRepository.delete(record.id)
-                    recordsState.value = PhotoRepository.getAll()
-                }
-            )
-            Divider()
+    val records = remember(queryText, onlyFavorites, refreshTick) {
+        PhotoRepository.query(
+            text = queryText.text.takeIf { it.isNotBlank() },
+            onlyFavorites = onlyFavorites
+        )
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        FiltersBarSimple(
+            queryText = queryText,
+            onQueryChange = { queryText = it },
+            onlyFavorites = onlyFavorites,
+            onToggleFavorites = { onlyFavorites = !onlyFavorites }
+        )
+
+        LazyColumn(Modifier.fillMaxSize()) {
+            items(records, key = { it.id }) { rec ->
+                PhotoRow(
+                    record = rec,
+                    onClick = { onOpen(rec) },
+                    onToggleFavorite = {
+                        PhotoRepository.toggleFavorite(rec.id)
+                        refreshTick++
+                    },
+                    onDelete = {
+                        PhotoRepository.delete(rec.id)
+                        refreshTick++
+                    }
+                )
+                Divider()
+            }
         }
     }
 }
+
+@Composable
+private fun FiltersBarSimple(
+    queryText: TextFieldValue,
+    onQueryChange: (TextFieldValue) -> Unit,
+    onlyFavorites: Boolean,
+    onToggleFavorites: () -> Unit
+) {
+    Column(Modifier.fillMaxWidth().padding(12.dp)) {
+        OutlinedTextField(
+            value = queryText,
+            onValueChange = onQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Rechercher dans le texte") },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            FilterChip(
+                selected = onlyFavorites,
+                onClick = onToggleFavorites,
+                label = { Text("Favoris") }
+            )
+        }
+    }
+}
+
 
 @Composable
 private fun PhotoRow(
@@ -220,7 +238,6 @@ private fun PhotoRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -233,16 +250,23 @@ private fun PhotoRow(
                 contentDescription = null,
                 modifier = Modifier
                     .size(64.dp)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onClick() }, // clic sur la vignette ouvre le détail
                 contentScale = ContentScale.Crop
             )
             Spacer(Modifier.width(12.dp))
         }
-        Column(modifier = Modifier.weight(1f)) {
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable { onClick() }
+        ) {
             Text(record.createdAtDisplay)
             val preview = if (record.text.length > 80) record.text.take(80) + "…" else record.text
             Text(preview)
         }
+
         IconButton(onClick = onToggleFavorite) {
             Icon(
                 imageVector = if (record.isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
@@ -258,13 +282,13 @@ private fun PhotoRow(
     }
 }
 
+
 @Composable
 fun CameraButton(onPhotoTaken: (Bitmap?) -> Unit, modifier: Modifier = Modifier) {
     val takePicturePreview = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview(),
         onResult = onPhotoTaken
     )
-
     Button(
         onClick = { takePicturePreview.launch(null) },
         contentPadding = PaddingValues(8.dp),

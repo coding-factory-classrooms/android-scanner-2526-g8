@@ -84,4 +84,24 @@ object PhotoRepository {
         idx.remove(id)
         writeIndex(idx)
     }
+
+
+    fun query(
+        text: String? = null,
+        onlyFavorites: Boolean = false,
+        fromMs: Long? = null,
+        toMs: Long? = null
+    ): List<PhotoRecord> {
+        val q = text?.trim().orEmpty()
+        val hasText = q.isNotEmpty()
+
+        return getAll().asSequence()
+            .filter { rec -> !onlyFavorites || rec.isFavorite }
+            .filter { rec -> fromMs?.let { rec.createdAtEpochMs >= it } ?: true }
+            .filter { rec -> toMs?.let   { rec.createdAtEpochMs <= it } ?: true }
+            .filter { rec -> if (!hasText) true else rec.text.contains(q, ignoreCase = true) }
+            .toList()
+    }
+
+    fun endOfDayMs(ms: Long): Long = ms + (24L * 60 * 60 * 1000) - 1L
 }
