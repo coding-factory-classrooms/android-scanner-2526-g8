@@ -78,12 +78,10 @@ fun ListScreen(vm: ListViewModel = viewModel()) {
     val context = LocalContext.current
     val uiState by vm.uiStateFlow.collectAsState()
 
-    val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl("https://vision.googleapis.com/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    val retrofit: Retrofit = Retrofit.Builder().baseUrl("https://vision.googleapis.com/")
+        .addConverterFactory(GsonConverterFactory.create()).build()
 
-    vm.api =  retrofit.create(GoogleVisionAPI::class.java)
+    vm.api = retrofit.create(GoogleVisionAPI::class.java)
 
     Scaffold(
         floatingActionButton = {
@@ -246,9 +244,11 @@ private fun FiltersBarSimple(
     onlyFavorites: Boolean,
     onToggleFavorites: () -> Unit
 ) {
-    Column(Modifier
-        .fillMaxWidth()
-        .padding(12.dp)) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+    ) {
         OutlinedTextField(
             value = queryText,
             onValueChange = onQueryChange,

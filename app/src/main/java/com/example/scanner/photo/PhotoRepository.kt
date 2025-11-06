@@ -55,21 +55,6 @@ object PhotoRepository {
         book.write("photo:$id", cur.copy(isFavorite = !cur.isFavorite))
     }
 
-    fun translatePhotoText(photoId: String, targetLang: String, onDone: (Boolean) -> Unit) {
-        val photo = PhotoRepository.get(photoId) ?: return onDone(false)
-        val originalText = photo.text
-
-        TranslateAPI.translate(originalText, targetLang) { translated ->
-            if (translated != null) {
-                PhotoRepository.updateTranslation(photoId, targetLang, translated)
-                onDone(true)
-            } else {
-                onDone(false)
-            }
-        }
-    }
-
-
     // sert à mettre à jour la traduction d'une photo
     fun updateTranslation(
         id: String, targetLanguage: String, translatedText: String
@@ -102,15 +87,11 @@ object PhotoRepository {
     fun query(
         text: String? = null,
         onlyFavorites: Boolean = false,
-        fromMs: Long? = null,
-        toMs: Long? = null
     ): List<PhotoModel> {
         val q = text?.trim().orEmpty()
         val hasText = q.isNotEmpty()
 
         return getAll().asSequence().filter { rec -> !onlyFavorites || rec.isFavorite }
-            .filter { rec -> fromMs?.let { rec.createdAtEpochMs >= it } ?: true }
-            .filter { rec -> toMs?.let { rec.createdAtEpochMs <= it } ?: true }
             .filter { rec -> if (!hasText) true else rec.text.contains(q, ignoreCase = true) }
             .toList()
     }
