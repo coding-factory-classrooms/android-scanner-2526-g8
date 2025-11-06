@@ -163,7 +163,7 @@ fun ItemsList(
 ) {
     var queryText by remember { mutableStateOf(TextFieldValue("")) }
     var onlyFavorites by remember { mutableStateOf(false) }
-    var refreshTick by remember { mutableStateOf(0) } // force un recalcul après favoris/suppression
+    var refreshTick by remember { mutableStateOf(0) } // force à recalculer les infos
 
     val records = remember(queryText, onlyFavorites, refreshTick) {
         PhotoRepository.query(
@@ -172,6 +172,7 @@ fun ItemsList(
         )
     }
 
+    // ici je fait mes query pour actualiser la barre de recherche et le filtre favoris
     Column(Modifier.fillMaxSize()) {
         FiltersBarSimple(
             queryText = queryText,
@@ -179,7 +180,6 @@ fun ItemsList(
             onlyFavorites = onlyFavorites,
             onToggleFavorites = { onlyFavorites = !onlyFavorites }
         )
-
         LazyColumn(Modifier.fillMaxSize()) {
             items(records, key = { it.id }) { rec ->
                 PhotoRow(

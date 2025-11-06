@@ -120,7 +120,7 @@ fun Button2(vm: ListViewModel = viewModel()) {
 
             val imagePath = file.absolutePath
 
-            // Texte simulé
+            // Texte simulé, change cette ligne si tu veux tester le filtre de recherche
             val fakeOcrText = "Ceci est un texte OCR simulé pour les tests 3333."
 
             // Création de la fiche dans paper via le vm
