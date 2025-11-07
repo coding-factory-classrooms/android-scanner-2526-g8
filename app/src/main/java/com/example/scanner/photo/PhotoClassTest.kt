@@ -1,23 +1,22 @@
 package com.example.scanner.photo
 
-import com.example.scanner.TranslateAPI
 import io.paperdb.Paper
 import java.io.File
 import java.util.UUID
 
-object PhotoRepository {
-    private const val BOOK = "photos"
-    private const val INDEX_KEY = "index"
+class PhotoClassTest: PhotoTest {
+    private val BOOK = "photos"
+    private val INDEX_KEY = "index"
 
-    private fun readIndex(): MutableList<String> =
+    override fun readIndex(): MutableList<String> =
         (Paper.book(BOOK).read(INDEX_KEY, emptyList<String>()) ?: emptyList()).toMutableList()
 
-    private fun writeIndex(ids: List<String>) {
+    override fun writeIndex(ids: List<String>) {
         Paper.book(BOOK).write(INDEX_KEY, ids)
     }
 
     // sert à créer une nouvelle photo
-    fun createFrom(imagePath: String, ocrText: String): PhotoModel {
+    override fun createFrom(imagePath: String, ocrText: String): PhotoModel {
         val id = UUID.randomUUID().toString()
         val rec = PhotoModel(
             id = id,
@@ -36,27 +35,27 @@ object PhotoRepository {
     }
 
     // sert à récupérer toutes les photos triées par date décroissante
-    fun getAll(): List<PhotoModel> {
+    override fun getAll(): List<PhotoModel> {
         return readIndex().mapNotNull { Paper.book(BOOK).read<PhotoModel>("photo:$it") }
             .sortedByDescending { it.createdAtEpochMs }
     }
 
     // sert à récupérer une photo par son ID
-    fun get(id: String?): PhotoModel? {
+    override fun get(id: String?): PhotoModel? {
         if (id == null) return null
 
         return Paper.book(BOOK).read("photo:$id", null)
     }
 
     // sert à basculer le statut favori d'une photo
-    fun toggleFavorite(id: String) {
+    override fun toggleFavorite(id: String) {
         val book = Paper.book(BOOK)
         val cur = book.read<PhotoModel>("photo:$id", null) ?: return
         book.write("photo:$id", cur.copy(isFavorite = !cur.isFavorite))
     }
 
     // sert à mettre à jour la traduction d'une photo
-    fun updateTranslation(
+    override fun updateTranslation(
         id: String, targetLanguage: String, translatedText: String
     ): Boolean {
         val book = Paper.book(BOOK)
@@ -74,7 +73,7 @@ object PhotoRepository {
 
 
     // sert a supprimer une photo
-    fun delete(id: String) {
+    override fun delete(id: String) {
         val book = Paper.book(BOOK)
         val cur = book.read<PhotoModel>("photo:$id", null) ?: return
         runCatching { File(cur.imagePath).takeIf { it.exists() }?.delete() }
@@ -84,9 +83,9 @@ object PhotoRepository {
         writeIndex(idx)
     }
 
-    fun query(
-        text: String? = null,
-        onlyFavorites: Boolean = false,
+    override fun query(
+        text: String?,
+        onlyFavorites: Boolean,
     ): List<PhotoModel> {
         val q = text?.trim().orEmpty()
         val hasText = q.isNotEmpty()
@@ -95,4 +94,8 @@ object PhotoRepository {
             .filter { rec -> if (!hasText) true else rec.text.contains(q, ignoreCase = true) }
             .toList()
     }
+}
+
+data object PhotoObject {
+    val repo = PhotoClassTest()
 }

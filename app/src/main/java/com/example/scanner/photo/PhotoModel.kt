@@ -1,5 +1,7 @@
 package com.example.scanner.photo
 
+
+
 // la classe pour les photos
 data class PhotoModel(
     val id: String,

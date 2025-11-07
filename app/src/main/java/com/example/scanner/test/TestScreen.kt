@@ -23,7 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
 import com.example.scanner.list.ListActivity
 import com.example.scanner.list.ListViewModel
-import com.example.scanner.photo.PhotoRepository
+import com.example.scanner.photo.PhotoObject
 import com.example.scanner.ui.theme.ScannerTheme
 import java.io.File
 
@@ -126,7 +126,7 @@ fun Button2() {
             val fakeOcrText = "Ceci est un texte OCR simulé pour les tests 3333."
 
             // Création de la fiche dans paper via le vm
-            PhotoRepository.createFrom(imagePath = imagePath, ocrText = fakeOcrText)
+            PhotoObject.repo.createFrom(imagePath = imagePath, ocrText = fakeOcrText)
 
             // Retourne automatiquement à la liste pour voir le résultat
             val intent = Intent(context, ListActivity::class.java)

@@ -27,7 +27,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.scanner.photo.PhotoRepository
+import com.example.scanner.photo.PhotoObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -39,7 +39,7 @@ fun DetailsScreen(
 ) {
     val context = LocalContext.current
 
-    val record = PhotoRepository.get(recordId)
+    val record = PhotoObject.repo.get(recordId)
 
     if (record == null) {
         Toast.makeText(context, "L'enregistrement n'existe pas", Toast.LENGTH_SHORT).show()

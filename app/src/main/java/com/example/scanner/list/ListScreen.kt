@@ -65,7 +65,7 @@ import com.example.scanner.TranslateAPI
 import com.example.scanner.common.GoogleVisionAPI
 import com.example.scanner.details.DetailsActivity
 import com.example.scanner.photo.PhotoModel
-import com.example.scanner.photo.PhotoRepository
+import com.example.scanner.photo.PhotoObject
 import com.example.scanner.test.TestActivity
 import com.example.scanner.ui.theme.ScannerTheme
 import retrofit2.Retrofit
@@ -164,7 +164,7 @@ fun ListScreenBody(uiState: ListUiState) {
 
                         // la je crée la fiche dans le paper et sa récupere aussi l'id de la fiche
                         val newRecord =
-                            PhotoRepository.createFrom(imagePath = fileName, ocrText = text)
+                            PhotoObject.repo.createFrom(imagePath = fileName, ocrText = text)
 
                         val cleanText = text.lowercase()
 
@@ -173,7 +173,7 @@ fun ListScreenBody(uiState: ListUiState) {
                         // appeler l'api de traduction ici
                         TranslateAPI.translate(cleanText, targetLanguage) {
                             if (it != null) {
-                                PhotoRepository.updateTranslation(
+                                PhotoObject.repo.updateTranslation(
                                     id = newRecord.id,
                                     targetLanguage = targetLanguage,
                                     translatedText = it
@@ -206,7 +206,7 @@ fun ItemsList() {
     var refreshTick by remember { mutableStateOf(0) } // force à recalculer les infos
 
     val records = remember(queryText, onlyFavorites, refreshTick) {
-        PhotoRepository.query(
+        PhotoObject.repo.query(
             text = queryText.text.takeIf { it.isNotBlank() }, onlyFavorites = onlyFavorites
         )
     }
@@ -226,10 +226,10 @@ fun ItemsList() {
                     intent.putExtra("record_id", rec.id)
                     context.startActivity(intent)
                 }, onToggleFavorite = {
-                    PhotoRepository.toggleFavorite(rec.id)
+                    PhotoObject.repo.toggleFavorite(rec.id)
                     refreshTick++
                 }, onDelete = {
-                    PhotoRepository.delete(rec.id)
+                    PhotoObject.repo.delete(rec.id)
                     refreshTick++
                 })
                 HorizontalDivider()
@@ -273,10 +273,11 @@ private fun PhotoRow(
 ) {
     val context = LocalContext.current
 
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .clickable { onClick() }
-        .padding(12.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically) {
         val fis = context.openFileInput(record.imagePath)
         val bmp = BitmapFactory.decodeStream(fis)
