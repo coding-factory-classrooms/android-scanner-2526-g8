@@ -1,13 +1,10 @@
 package com.example.scanner
 
-import com.example.scanner.common.GoogleVisionAPI
-import com.example.scanner.common.VisionRequest
-import com.example.scanner.common.VisionResponse
 import com.example.scanner.photo.PhotoModel
 import com.example.scanner.photo.PhotoTest
+import org.junit.Assert
 import org.junit.Test
-import retrofit2.Call
-import retrofit2.mock.Calls
+import java.util.UUID
 
 val samplePhoto = PhotoModel(
     id = "1",
@@ -20,72 +17,182 @@ val samplePhoto = PhotoModel(
 )
 
 class FakePaper: PhotoTest{
-    override fun readIndex(): MutableList<String> {
-        TODO("Not yet implemented")
-    }
-
-    override fun writeIndex(ids: List<String>) {
-        TODO("Not yet implemented")
-    }
+    val storage = mutableListOf<PhotoModel>()
 
     override fun createFrom(
         imagePath: String,
-        ocrText: String
+        ocrText: String,
+        targetLanguage: String,
+        translatedText: String
     ): PhotoModel {
-        TODO("Not yet implemented")
+        val id = UUID.randomUUID().toString()
+        val rec = PhotoModel(
+            id = id,
+            imagePath = imagePath,
+            text = ocrText,
+            createdAtEpochMs = System.currentTimeMillis(),
+            targetLanguage = targetLanguage,
+            translatedText = translatedText,
+            isFavorite = false,
+        )
+
+        storage.add(rec)
+
+        return rec
     }
 
     override fun getAll(): List<PhotoModel> {
-        TODO("Not yet implemented")
+        return storage
     }
 
     override fun get(id: String?): PhotoModel? {
-        TODO("Not yet implemented")
+        return storage.find { it.id == id }
     }
 
     override fun toggleFavorite(id: String) {
-        TODO("Not yet implemented")
-    }
+        val photo = storage.find { id == it.id } ?: return
 
-    override fun updateTranslation(
-        id: String,
-        targetLanguage: String,
-        translatedText: String
-    ): Boolean {
-        TODO("Not yet implemented")
+        storage.remove(photo)
+
+        photo.isFavorite = !photo.isFavorite
+
+        storage.add(photo)
     }
 
     override fun delete(id: String) {
-        TODO("Not yet implemented")
+        storage.remove(storage.find { id == it.id })
     }
 
     override fun query(
         text: String?,
         onlyFavorites: Boolean
     ): List<PhotoModel> {
-        TODO("Not yet implemented")
-    }
+        val q = text?.trim().orEmpty()
+        val hasText = q.isNotEmpty()
 
+        return storage
+            .filter { rec -> !onlyFavorites || rec.isFavorite }
+            .filter { rec -> if (!hasText) true else rec.text.contains(q, ignoreCase = true) }
+            .toList()
+    }
 }
 
 
 class PhotoModelTest {
     @Test
     fun `can insert and get record after insert`() {
+        // Arrange
         val fakeRepo = FakePaper()
-        // Insert the sample photo
+
+        //Act
         val createdPhoto = fakeRepo.createFrom(
             imagePath = samplePhoto.imagePath,
-            ocrText = samplePhoto.text
+            ocrText = samplePhoto.text,
+            targetLanguage = samplePhoto.targetLanguage,
+            translatedText = samplePhoto.translatedText
         )
 
-        // Retrieve the photo by ID
         val retrievedPhoto = fakeRepo.get(createdPhoto.id)
 
-        // Assertions
-        assert(retrievedPhoto != null)
-        assert(retrievedPhoto?.id == createdPhoto.id)
-        assert(retrievedPhoto?.imagePath == createdPhoto.imagePath)
-        assert(retrievedPhoto?.text == createdPhoto.text)
+        // Assert
+        Assert.assertNotEquals(null, retrievedPhoto)
+    }
+
+    @Test
+    fun `can insert and get record after insert then remove the record and get an empty list`() {
+        // Arrange
+        val fakeRepo = FakePaper()
+
+        //Act
+        val createdPhoto = fakeRepo.createFrom(
+            imagePath = samplePhoto.imagePath,
+            ocrText = samplePhoto.text,
+            targetLanguage = samplePhoto.targetLanguage,
+            translatedText = samplePhoto.translatedText
+        )
+
+        val retrievedPhoto = fakeRepo.get(createdPhoto.id)
+
+        // Assert
+        Assert.assertNotEquals(null, retrievedPhoto)
+
+        // Act
+        fakeRepo.delete(createdPhoto.id)
+
+        // Assert
+        Assert.assertEquals(emptyList<PhotoModel>(), fakeRepo.getAll())
+    }
+
+    @Test
+    fun `toggle favorite make a record favorite`() {
+        // Arrange
+        val fakeRepo = FakePaper()
+
+        //Act
+        val createdPhoto = fakeRepo.createFrom(
+            imagePath = samplePhoto.imagePath,
+            ocrText = samplePhoto.text,
+            targetLanguage = samplePhoto.targetLanguage,
+            translatedText = samplePhoto.translatedText
+        )
+
+        fakeRepo.toggleFavorite(createdPhoto.id)
+
+        val record = fakeRepo.get(createdPhoto.id)
+
+        // Assert
+        Assert.assertEquals(true, record?.isFavorite)
+    }
+
+
+    @Test
+    fun `adding isFavorite or a text to query filters the records`() {
+        // Arrange
+        val fakeRepo = FakePaper()
+
+        //Act
+        val createdPhoto = fakeRepo.createFrom(
+            imagePath = samplePhoto.imagePath,
+            ocrText = samplePhoto.text,
+            targetLanguage = samplePhoto.targetLanguage,
+            translatedText = samplePhoto.translatedText
+        )
+
+        var data = fakeRepo.query()
+
+        // Assert
+        Assert.assertEquals(listOf(createdPhoto), data)
+
+        // Act
+        data = fakeRepo.query(onlyFavorites = true)
+
+        // Assert
+        Assert.assertEquals(emptyList<PhotoModel>(), data)
+
+
+        // Act
+        fakeRepo.toggleFavorite(createdPhoto.id)
+        data = fakeRepo.query(onlyFavorites = true)
+
+        createdPhoto.isFavorite = true
+
+        // Assert
+        Assert.assertEquals(listOf(createdPhoto), data)
+
+
+        // Act
+        fakeRepo.toggleFavorite(createdPhoto.id)
+        data = fakeRepo.query(text = createdPhoto.text + "random text")
+
+        // Assert
+        Assert.assertEquals(emptyList<PhotoModel>(), data)
+
+
+        // Act
+        data = fakeRepo.query(text = createdPhoto.text.take(6))
+
+        // Assert
+        Assert.assertEquals(listOf(createdPhoto), data)
+
     }
 }

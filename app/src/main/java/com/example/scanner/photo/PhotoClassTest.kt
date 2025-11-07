@@ -78,7 +78,8 @@ class PhotoClassTest (): PhotoTest {
         val q = text?.trim().orEmpty()
         val hasText = q.isNotEmpty()
 
-        return getAll().asSequence().filter { rec -> !onlyFavorites || rec.isFavorite }
+        return getAll().asSequence()
+            .filter { rec -> !onlyFavorites || rec.isFavorite }
             .filter { rec -> if (!hasText) true else rec.text.contains(q, ignoreCase = true) }
             .toList()
     }
