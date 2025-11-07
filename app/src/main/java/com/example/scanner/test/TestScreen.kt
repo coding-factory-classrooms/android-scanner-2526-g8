@@ -124,9 +124,16 @@ fun Button2() {
 
             // Texte simulé, change cette ligne si tu veux tester le filtre de recherche
             val fakeOcrText = "Ceci est un texte OCR simulé pour les tests 3333."
+            val targetLanguage = "fr"
+            val translatedText = "This is a simulated OCR for tests 3333"
 
             // Création de la fiche dans paper via le vm
-            PhotoObject.repo.createFrom(imagePath = imagePath, ocrText = fakeOcrText)
+            PhotoObject.repo.createFrom(
+                imagePath = imagePath,
+                ocrText = fakeOcrText,
+                targetLanguage = targetLanguage,
+                translatedText = translatedText
+            )
 
             // Retourne automatiquement à la liste pour voir le résultat
             val intent = Intent(context, ListActivity::class.java)
