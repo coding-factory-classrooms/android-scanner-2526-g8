@@ -1,42 +1,43 @@
 package com.example.scanner.photo
 
 import io.paperdb.Paper
-import java.io.File
 import java.util.UUID
 
-class PhotoClassTest: PhotoTest {
-    private val BOOK = "photos"
-    private val INDEX_KEY = "index"
-
-    override fun readIndex(): MutableList<String> =
-        (Paper.book(BOOK).read(INDEX_KEY, emptyList<String>()) ?: emptyList()).toMutableList()
-
-    override fun writeIndex(ids: List<String>) {
-        Paper.book(BOOK).write(INDEX_KEY, ids)
-    }
+class PhotoClassTest (): PhotoTest {
 
     // sert à créer une nouvelle photo
-    override fun createFrom(imagePath: String, ocrText: String): PhotoModel {
+    override fun createFrom(
+        imagePath: String,
+        ocrText: String,
+        targetLanguage: String,
+        translatedText: String
+    ): PhotoModel {
+        val allPhotos = Paper.book()
+            .read("photos", emptyList<PhotoModel>())!!
+            .toMutableList()
+
         val id = UUID.randomUUID().toString()
         val rec = PhotoModel(
             id = id,
             imagePath = imagePath,
             text = ocrText,
             createdAtEpochMs = System.currentTimeMillis(),
-            isFavorite = false
+            targetLanguage = targetLanguage,
+            translatedText = translatedText,
+            isFavorite = false,
         )
-        val book = Paper.book(BOOK)
-        book.write("photo:$id", rec)
-        val idx = readIndex()
-        idx.add(0, id)
-        writeIndex(idx)
+
+        allPhotos.add(rec)
+
+        Paper.book().write("photos", allPhotos)
 
         return rec
     }
 
     // sert à récupérer toutes les photos triées par date décroissante
     override fun getAll(): List<PhotoModel> {
-        return readIndex().mapNotNull { Paper.book(BOOK).read<PhotoModel>("photo:$it") }
+        return Paper.book()
+            .read("photos", emptyList<PhotoModel>())!!
             .sortedByDescending { it.createdAtEpochMs }
     }
 
@@ -44,43 +45,30 @@ class PhotoClassTest: PhotoTest {
     override fun get(id: String?): PhotoModel? {
         if (id == null) return null
 
-        return Paper.book(BOOK).read("photo:$id", null)
+        return getAll().find { id == it.id }
     }
 
     // sert à basculer le statut favori d'une photo
     override fun toggleFavorite(id: String) {
-        val book = Paper.book(BOOK)
-        val cur = book.read<PhotoModel>("photo:$id", null) ?: return
-        book.write("photo:$id", cur.copy(isFavorite = !cur.isFavorite))
-    }
+        val allPhotos = getAll().toMutableList()
+        val photo = allPhotos.find { id == it.id } ?: return
 
-    // sert à mettre à jour la traduction d'une photo
-    override fun updateTranslation(
-        id: String, targetLanguage: String, translatedText: String
-    ): Boolean {
-        val book = Paper.book(BOOK)
-        val cur = book.read<PhotoModel>("photo:$id", null) ?: return false
+        allPhotos.remove(photo)
 
-        val lang = targetLanguage.lowercase() // normalise le code du language
-        val updated = cur.copy(
-            targetLanguage = lang, translatedText = translatedText
+        photo.isFavorite = !photo.isFavorite
 
-        )
+        allPhotos.add(photo)
 
-        book.write("photo:$id", updated)
-        return true
+        Paper.book().write("photos", allPhotos)
     }
 
 
     // sert a supprimer une photo
     override fun delete(id: String) {
-        val book = Paper.book(BOOK)
-        val cur = book.read<PhotoModel>("photo:$id", null) ?: return
-        runCatching { File(cur.imagePath).takeIf { it.exists() }?.delete() }
-        book.delete("photo:$id")
-        val idx = readIndex()
-        idx.remove(id)
-        writeIndex(idx)
+        val allPhotos = getAll().toMutableList()
+        allPhotos.remove(allPhotos.find { id == it.id })
+
+        Paper.book().write("photos", allPhotos)
     }
 
     override fun query(

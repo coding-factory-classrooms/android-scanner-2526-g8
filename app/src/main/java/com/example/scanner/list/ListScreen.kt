@@ -162,10 +162,6 @@ fun ListScreenBody(uiState: ListUiState) {
                             uiState.content.bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
                         }
 
-                        // la je crée la fiche dans le paper et sa récupere aussi l'id de la fiche
-                        val newRecord =
-                            PhotoObject.repo.createFrom(imagePath = fileName, ocrText = text)
-
                         val cleanText = text.lowercase()
 
                         val targetLanguage = "fr"
@@ -173,11 +169,15 @@ fun ListScreenBody(uiState: ListUiState) {
                         // appeler l'api de traduction ici
                         TranslateAPI.translate(cleanText, targetLanguage) {
                             if (it != null) {
-                                PhotoObject.repo.updateTranslation(
-                                    id = newRecord.id,
-                                    targetLanguage = targetLanguage,
-                                    translatedText = it
-                                )
+                                // la je crée la fiche dans le paper et sa récupere aussi l'id de la fiche
+                                val newRecord =
+                                    PhotoObject.repo.createFrom(
+                                        imagePath = fileName,
+                                        ocrText = text,
+                                        targetLanguage = targetLanguage,
+                                        translatedText = it
+                                    )
+
                                 //  ouvrir les détails via l'id
                                 val intent = Intent(
                                     context, DetailsActivity::class.java
@@ -186,6 +186,10 @@ fun ListScreenBody(uiState: ListUiState) {
                                 }
 
                                 context.startActivity(intent)
+                            } else {
+                                Toast.makeText(
+                                    context, "The translation couldn't be done", Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
 

@@ -7,8 +7,8 @@ data class PhotoModel(
     val id: String,
     val imagePath: String,
     val text: String,
-    val createdAtEpochMs: Long,
-    val isFavorite: Boolean = false,
-    val targetLanguage: String? = null,
-    var translatedText: String? = null
+    var createdAtEpochMs: Long,
+    val targetLanguage: String,
+    val translatedText: String,
+    var isFavorite: Boolean = false
 )
