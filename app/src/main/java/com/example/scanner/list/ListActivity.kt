@@ -6,7 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import io.paperdb.Paper as Paper
+import io.paperdb.Paper
 
 
 class ListActivity : ComponentActivity() {
@@ -16,7 +16,7 @@ class ListActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Paper.init(this)
 
-        if(checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE)
         }
 

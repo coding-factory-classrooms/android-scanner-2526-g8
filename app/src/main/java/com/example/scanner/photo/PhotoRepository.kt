@@ -1,12 +1,12 @@
 package com.example.scanner.photo
 
+import com.example.scanner.common.PhotoModel
 import io.paperdb.Paper
 import java.util.UUID
 
 class PhotoRepository(
     val book: PaperBookInterface
 ) {
-
     // sert à créer une nouvelle photo
     fun createFrom(
         imagePath: String, ocrText: String, targetLanguage: String, translatedText: String

@@ -1,7 +1,7 @@
 package com.example.scanner
 
+import com.example.scanner.common.PhotoModel
 import com.example.scanner.photo.PaperBookInterface
-import com.example.scanner.photo.PhotoModel
 import com.example.scanner.photo.PhotoRepository
 import org.junit.Assert
 import org.junit.Test

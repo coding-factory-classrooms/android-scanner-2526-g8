@@ -63,8 +63,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scanner.R
 import com.example.scanner.TranslateAPI
 import com.example.scanner.common.GoogleVisionAPI
+import com.example.scanner.common.PhotoModel
 import com.example.scanner.details.DetailsActivity
-import com.example.scanner.photo.PhotoModel
 import com.example.scanner.photo.PhotoObject
 import com.example.scanner.test.TestActivity
 import com.example.scanner.ui.theme.ScannerTheme
