@@ -3,18 +3,15 @@ package com.example.scanner.photo
 import io.paperdb.Paper
 import java.util.UUID
 
-class PhotoClassTest (): PhotoTest {
+class PhotoRepository(
+    val book: PaperBookInterface
+) {
 
     // sert à créer une nouvelle photo
-    override fun createFrom(
-        imagePath: String,
-        ocrText: String,
-        targetLanguage: String,
-        translatedText: String
+    fun createFrom(
+        imagePath: String, ocrText: String, targetLanguage: String, translatedText: String
     ): PhotoModel {
-        val allPhotos = Paper.book()
-            .read("photos", emptyList<PhotoModel>())!!
-            .toMutableList()
+        val allPhotos = book.read("photos", emptyList<PhotoModel>()).toMutableList()
 
         val id = UUID.randomUUID().toString()
         val rec = PhotoModel(
@@ -29,27 +26,26 @@ class PhotoClassTest (): PhotoTest {
 
         allPhotos.add(rec)
 
-        Paper.book().write("photos", allPhotos)
+        book.write("photos", allPhotos)
 
         return rec
     }
 
     // sert à récupérer toutes les photos triées par date décroissante
-    override fun getAll(): List<PhotoModel> {
-        return Paper.book()
-            .read("photos", emptyList<PhotoModel>())!!
+    fun getAll(): List<PhotoModel> {
+        return book.read("photos", emptyList<PhotoModel>())
             .sortedByDescending { it.createdAtEpochMs }
     }
 
     // sert à récupérer une photo par son ID
-    override fun get(id: String?): PhotoModel? {
+    fun get(id: String?): PhotoModel? {
         if (id == null) return null
 
         return getAll().find { id == it.id }
     }
 
     // sert à basculer le statut favori d'une photo
-    override fun toggleFavorite(id: String) {
+    fun toggleFavorite(id: String) {
         val allPhotos = getAll().toMutableList()
         val photo = allPhotos.find { id == it.id } ?: return
 
@@ -59,19 +55,19 @@ class PhotoClassTest (): PhotoTest {
 
         allPhotos.add(photo)
 
-        Paper.book().write("photos", allPhotos)
+        book.write("photos", allPhotos)
     }
 
 
     // sert a supprimer une photo
-    override fun delete(id: String) {
+    fun delete(id: String) {
         val allPhotos = getAll().toMutableList()
         allPhotos.remove(allPhotos.find { id == it.id })
 
-        Paper.book().write("photos", allPhotos)
+        book.write("photos", allPhotos)
     }
 
-    override fun query(
+    fun query(
         text: String?,
         onlyFavorites: Boolean,
     ): List<PhotoModel> {
@@ -86,5 +82,5 @@ class PhotoClassTest (): PhotoTest {
 }
 
 data object PhotoObject {
-    val repo = PhotoClassTest()
+    val repo = PhotoRepository(book = Paper.book() as PaperBookInterface)
 }
