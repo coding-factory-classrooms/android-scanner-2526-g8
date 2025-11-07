@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,6 +43,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,6 +84,8 @@ fun ListScreen(vm: ListViewModel = viewModel()) {
 
     vm.api = retrofit.create(GoogleVisionAPI::class.java)
 
+    val refreshTick = remember { mutableStateOf(0) } // force à recalculer les infos
+
     Scaffold(
         floatingActionButton = {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -118,13 +120,13 @@ fun ListScreen(vm: ListViewModel = viewModel()) {
                 .padding(innerPadding)
                 .fillMaxSize(),
         ) {
-            ListScreenBody(uiState)
+            ListScreenBody(uiState, refreshTick)
         }
     }
 }
 
 @Composable
-fun ListScreenBody(uiState: ListUiState) {
+fun ListScreenBody(uiState: ListUiState, refreshTick: MutableState<Int>) {
     val context = LocalContext.current
 
     when (uiState) {
@@ -135,7 +137,7 @@ fun ListScreenBody(uiState: ListUiState) {
         }
 
         // afficher la liste et ouvrir un détail quand on clique une row existante
-        ListUiState.Initial -> ItemsList()
+        ListUiState.Initial -> ItemsList(refreshTick)
 
         ListUiState.Loading -> {
             Column(
@@ -148,7 +150,7 @@ fun ListScreenBody(uiState: ListUiState) {
         }
 
         is ListUiState.Success -> {
-            ItemsList()
+            ItemsList(refreshTick)
 
             LaunchedEffect(Unit) {
                 when (val text = uiState.content.message) {
@@ -178,6 +180,8 @@ fun ListScreenBody(uiState: ListUiState) {
                                         translatedText = it
                                     )
 
+                                refreshTick.value++
+
                                 //  ouvrir les détails via l'id
                                 val intent = Intent(
                                     context, DetailsActivity::class.java
@@ -202,14 +206,15 @@ fun ListScreenBody(uiState: ListUiState) {
 
 
 @Composable
-fun ItemsList() {
+fun ItemsList(
+    refreshTick: MutableState<Int>
+) {
     val context = LocalContext.current
 
     var queryText by remember { mutableStateOf(TextFieldValue("")) }
     var onlyFavorites by remember { mutableStateOf(false) }
-    var refreshTick by remember { mutableStateOf(0) } // force à recalculer les infos
 
-    val records = remember(queryText, onlyFavorites, refreshTick) {
+    val records = remember(queryText, onlyFavorites, refreshTick.value) {
         PhotoObject.repo.query(
             text = queryText.text.takeIf { it.isNotBlank() }, onlyFavorites = onlyFavorites
         )
@@ -231,10 +236,10 @@ fun ItemsList() {
                     context.startActivity(intent)
                 }, onToggleFavorite = {
                     PhotoObject.repo.toggleFavorite(rec.id)
-                    refreshTick++
+                    refreshTick.value++
                 }, onDelete = {
                     PhotoObject.repo.delete(rec.id)
-                    refreshTick++
+                    refreshTick.value++
                 })
                 HorizontalDivider()
             }
@@ -309,7 +314,7 @@ private fun PhotoRow(
             val preview = if (record.text.length > 80) record.text.take(80) + "…" else record.text
             Text("OCR: $preview")
 
-            record.translatedText?.let { translated ->
+            record.translatedText.let { translated ->
                 val tPreview = if (translated.length > 80) translated.take(80) + "…" else translated
                 Text("Translation: $tPreview", style = MaterialTheme.typography.bodySmall)
             }
