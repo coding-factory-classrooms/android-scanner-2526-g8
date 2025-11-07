@@ -4,6 +4,19 @@ import com.example.scanner.common.PhotoModel
 import io.paperdb.Paper
 import java.util.UUID
 
+class PaperBook: PaperBookInterface {
+    override fun <T> write(key: String, value: T) {
+        @Suppress("UNCHECKED_CAST")
+        Paper.book().write<T>(key, value as (T & Any))
+    }
+
+    override fun <T> read(key: String, defaultValue: T): T {
+        @Suppress("UNCHECKED_CAST")
+        return Paper.book().read<T>(key, defaultValue) as T
+    }
+
+}
+
 class PhotoRepository(
     val book: PaperBookInterface
 ) {
@@ -81,6 +94,6 @@ class PhotoRepository(
     }
 }
 
-data object PhotoObject {
-    val repo = PhotoRepository(book = Paper.book() as PaperBookInterface)
+object PhotoObject {
+    val repo = PhotoRepository(PaperBook())
 }

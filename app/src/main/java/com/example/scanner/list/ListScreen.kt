@@ -190,10 +190,6 @@ fun ListScreenBody(uiState: ListUiState, refreshTick: MutableState<Int>) {
                                 }
 
                                 context.startActivity(intent)
-                            } else {
-                                Toast.makeText(
-                                    context, "The translation couldn't be done", Toast.LENGTH_SHORT
-                                ).show()
                             }
                         }
 

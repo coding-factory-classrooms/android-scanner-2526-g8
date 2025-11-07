@@ -6,6 +6,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.example.scanner.photo.PaperBookInterface
+import com.example.scanner.photo.PhotoObject
 import io.paperdb.Paper
 
 
